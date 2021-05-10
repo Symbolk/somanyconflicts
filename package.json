@@ -1,8 +1,13 @@
 {
   "name": "somanyconflicts",
-	"displayName": "SoManyConflicts",
+	"displayName": "So Many Conflicts",
 	"description": "No more headache on multiple conflicts after merging!",
 	"version": "0.0.1",
+	"publisher": "Symbolk",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Symbolk/somanyconflicts"
+    },
 	"engines": {
 		"vscode": "^1.56.0"
 	},
@@ -10,14 +15,14 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:somanyconflicts.helloWorld"
+        "onCommand:somanyconflicts.somany"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "somanyconflicts.helloWorld",
-				"title": "Hello World"
+				"command": "somanyconflicts.somany",
+				"title": "So Many Conflicts"
 			}
 		]
 	},
