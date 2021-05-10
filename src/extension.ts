@@ -28,6 +28,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(message)
 
         SoManyConflicts.scanAllConflicts(workspace)
+
+        // feature1: topo-sort for the optimal order to resolve conflicts
+        // feature2: recommend the next (related or similar) conflict to resolve
+        // feature3: recommend resolution strategy given conflict resolved before
+		
       } else {
         message = 'So Many Conflicts: Please open a working folder first.'
 

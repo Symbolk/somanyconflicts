@@ -1,26 +1,33 @@
+import * as vscode from 'vscode'
 import simpleGit, { SimpleGit, StatusResult } from 'simple-git'
+import { readFileSync } from 'fs'
+import { Parser } from './Parser'
+import { ISection } from './ISection'
 
 export class SoManyConflicts {
-  public static scanAllConflicts(path: string): void {
+  public static scanAllConflicts(workspace: string): void {
+    let message: string = ''
     // get all files in conflict state in the opened workspace
     // case1: git repo
     let filePaths: string[]
-    SoManyConflicts.getConflictingFiles(path)
+    SoManyConflicts.getConflictingFiles(workspace)
       .then((res) => {
         if (res) {
-          console.log(res)
+          for (const path of res) {
+            // scan and parse all conflict blocks
+            let content = readFileSync(workspace + '/' + path, 'utf-8')
+            const sections: ISection[] = Parser.parse(content)
+            console.log()
+          }
+          // build partial order between conflicts (identifier or LSP)
+          // must consider the conflict blocks and also the context of it to work better
+
+
         }
       })
       .catch((err) => {
-        console.log(err)
+        vscode.window.showInformationMessage(err)
       })
-
-    // scan and parse all conflict blocks
-    // build partial order between conflicts (identifier or LSP)
-    // must consider the conflict blocks and also the context of it to work better
-    // feature1: topo-sort for the optimal order to resolve conflicts
-    // feature2: recommend the next (related or similar) conflict to resolve
-    // feature3: recommend resolution strategy given conflict resolved before
   }
 
   // private static parseConflicts(): {}
