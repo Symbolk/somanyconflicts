@@ -15,29 +15,25 @@ export class Parser {
     let state: ParserState = ParserState.OutsideConflict
     let currentConflict: Conflict | undefined = undefined
     let currentTextLines: string[] = []
+    let startLine: number = -1
+    let endLine: number = -1
 
-    for (const line of lines) {
-      const startsWithMarkerOursResult: StartsWithResult = StringUtils.startsWith(
-        line,
-        Constants.conflictMarkerOurs
-      )
+    for (let i = 0, len = lines.length; i < len; i++) {
+      const line: string = lines[i]
+      const startsWithMarkerOursResult: StartsWithResult =
+        StringUtils.startsWith(line, Constants.conflictMarkerOurs)
 
-      const startsWithMarkerOriginalResult: StartsWithResult = StringUtils.startsWith(
-        line,
-        Constants.conflictMarkerOriginal
-      )
+      const startsWithMarkerOriginalResult: StartsWithResult =
+        StringUtils.startsWith(line, Constants.conflictMarkerOriginal)
 
-      const startsWithMarkerTheirsResult: StartsWithResult = StringUtils.startsWith(
-        line,
-        Constants.conflictMarkerTheirs
-      )
+      const startsWithMarkerTheirsResult: StartsWithResult =
+        StringUtils.startsWith(line, Constants.conflictMarkerTheirs)
 
-      const startsWithMarkerEndResult: StartsWithResult = StringUtils.startsWith(
-        line,
-        Constants.conflictMarkerEnd
-      )
+      const startsWithMarkerEndResult: StartsWithResult =
+        StringUtils.startsWith(line, Constants.conflictMarkerEnd)
 
       if (startsWithMarkerOursResult.success) {
+        startLine = i
         if (state !== ParserState.OutsideConflict) {
           throw new Error('Unexpected conflict marker')
         }
@@ -79,6 +75,8 @@ export class Parser {
         currentConflict!.setTextAfterMarkerEnd(
           startsWithMarkerEndResult.remainingText
         )
+        endLine = i
+        currentConflict!.computeRanges(startLine, endLine)
         sections.push(new ConflictSection(currentConflict!))
         currentConflict = undefined
         state = ParserState.OutsideConflict

@@ -1,5 +1,5 @@
 'use strict'
-
+import { Position, Range } from 'vscode'
 import { Constants } from './Constants'
 
 export class Conflict {
@@ -13,6 +13,12 @@ export class Conflict {
   private ourLines: string[] = []
   private originalLines: string[] = []
   private theirLines: string[] = []
+  public ourRange: Range = new Range(new Position(0, 0), new Position(0, 0))
+  public originalRange: Range = new Range(
+    new Position(0, 0),
+    new Position(0, 0)
+  )
+  public theirRange: Range = new Range(new Position(0, 0), new Position(0, 0))
 
   public getSqueezedText(): string {
     const minNumberOfLines: number = Math.min(
@@ -42,12 +48,10 @@ export class Conflict {
 
     // We need to subtract topCursor, to ensure that topCursor + bottomCursor <= minNumberOfLines
     while (bottomCursor < minNumberOfLines - topCursor) {
-      const ourLine: string = this.ourLines[
-        this.ourLines.length - 1 - bottomCursor
-      ]
-      const theirLine: string = this.theirLines[
-        this.theirLines.length - 1 - bottomCursor
-      ]
+      const ourLine: string =
+        this.ourLines[this.ourLines.length - 1 - bottomCursor]
+      const theirLine: string =
+        this.theirLines[this.theirLines.length - 1 - bottomCursor]
 
       if (ourLine === theirLine) {
         bottomCursor++
@@ -130,5 +134,29 @@ export class Conflict {
 
   public setTextAfterMarkerTheirs(text: string): void {
     this.textAfterMarkerTheirs = text
+  }
+
+  public computeRanges(startLine: number, endLine: number) {
+    let oursEndLine = startLine + this.ourLines.length
+    this.ourRange = new Range(
+      new Position(startLine, 0),
+      new Position(oursEndLine, 0)
+    )
+    if (this.hasOriginal) {
+      let orgEndLine = oursEndLine + 1 + this.originalLines.length
+      this.originalRange = new Range(
+        new Position(oursEndLine + 1, 0),
+        new Position(orgEndLine, 0)
+      )
+      this.theirRange = new Range(
+        new Position(orgEndLine + 1, 0),
+        new Position(endLine, 0)
+      )
+    } else {
+      this.theirRange = new Range(
+        new Position(oursEndLine + 1, 0),
+        new Position(endLine, 0)
+      )
+    }
   }
 }
