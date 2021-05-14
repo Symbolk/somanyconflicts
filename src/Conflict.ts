@@ -137,25 +137,38 @@ export class Conflict {
   }
 
   public computeRanges(startLine: number, endLine: number) {
-    let oursEndLine = startLine + this.ourLines.length
+    // line numbers start from 0, and do not include conflict markers
+    let oursEndLine = startLine + 1 + this.ourLines.length - 1
     this.ourRange = new Range(
-      new Position(startLine, 0),
-      new Position(oursEndLine, 0)
+      new Position(startLine + 1, 0),
+      new Position(
+        oursEndLine,
+        this.ourLines[this.ourLines.length - 1].length - 1
+      )
     )
     if (this.hasOriginal) {
       let orgEndLine = oursEndLine + 1 + this.originalLines.length
       this.originalRange = new Range(
-        new Position(oursEndLine + 1, 0),
-        new Position(orgEndLine, 0)
+        new Position(oursEndLine + 2, 0),
+        new Position(
+          orgEndLine,
+          this.originalLines[this.originalLines.length - 1].length - 1
+        )
       )
       this.theirRange = new Range(
-        new Position(orgEndLine + 1, 0),
-        new Position(endLine, 0)
+        new Position(orgEndLine + 2, 0),
+        new Position(
+          endLine - 1,
+          this.theirLines[this.theirLines.length - 1].length - 1
+        )
       )
     } else {
       this.theirRange = new Range(
-        new Position(oursEndLine + 1, 0),
-        new Position(endLine, 0)
+        new Position(oursEndLine + 2, 0),
+        new Position(
+          endLine - 1,
+          this.theirLines[this.theirLines.length - 1].length - 1
+        )
       )
     }
   }
