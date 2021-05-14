@@ -13,14 +13,28 @@ export class SoManyConflicts {
       let filePaths: string[] = await this.getConflictingFiles(workspace)
       if (filePaths) {
         for (const path of filePaths) {
+          console.log('Start parsing ' + path)
           // scan and parse all conflict blocks
-          let content = readFileSync(workspace + '/' + path, 'utf-8')
+          let absPath = workspace + '/' + path
+          let content = readFileSync(absPath, 'utf-8')
           const sections: ISection[] = Parser.parse(content)
-          console.log()
+          // extract identifiers in each conflict block
+          let uri = vscode.Uri.file(absPath)
+
+          let symbols = await vscode.commands.executeCommand<
+            vscode.DocumentSymbol[]
+          >('vscode.executeDocumentSymbolProvider', uri)
+          if (symbols !== undefined) {
+            console.log(symbols)
+          }
+
+          // construct partial order of all conflict blocks
+
+          // application
         }
       }
     } catch (err) {
-      vscode.window.showInformationMessage(err)
+      vscode.window.showInformationMessage(err.message)
     }
   }
 
