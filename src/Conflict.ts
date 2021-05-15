@@ -143,7 +143,9 @@ export class Conflict {
       new Position(startLine + 1, 0),
       new Position(
         oursEndLine,
-        this.ourLines[this.ourLines.length - 1].length - 1
+        this.ourLines.length > 0
+          ? this.ourLines[this.ourLines.length - 1].length - 1
+          : 0
       )
     )
     if (this.hasOriginal) {
@@ -152,14 +154,18 @@ export class Conflict {
         new Position(oursEndLine + 2, 0),
         new Position(
           orgEndLine,
-          this.originalLines[this.originalLines.length - 1].length - 1
+          this.originalLines.length > 0
+            ? this.originalLines[this.originalLines.length - 1].length - 1
+            : 0
         )
       )
       this.theirRange = new Range(
         new Position(orgEndLine + 2, 0),
         new Position(
           endLine - 1,
-          this.theirLines[this.theirLines.length - 1].length - 1
+          this.theirLines.length > 0
+            ? this.theirLines[this.theirLines.length - 1].length - 1
+            : 0
         )
       )
     } else {
@@ -167,7 +173,9 @@ export class Conflict {
         new Position(oursEndLine + 2, 0),
         new Position(
           endLine - 1,
-          this.theirLines[this.theirLines.length - 1].length - 1
+          this.theirLines.length > 0
+            ? this.theirLines[this.theirLines.length - 1].length - 1
+            : 0
         )
       )
     }
