@@ -1,8 +1,11 @@
 'use strict'
+
+import { Uri } from 'vscode'
 import { Position, Range } from 'vscode'
 import { Constants } from './Constants'
 
 export class Conflict {
+  public uri: Uri | undefined = undefined
   public hasOriginal: boolean = false
 
   private textAfterMarkerOurs: string | undefined = undefined

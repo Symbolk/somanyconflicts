@@ -1,5 +1,6 @@
 'use strict'
 
+import { Uri } from 'vscode'
 import { Conflict } from './Conflict'
 import { ConflictSection } from './ConflictSection'
 import { Constants } from './Constants'
@@ -8,7 +9,7 @@ import { StringUtils, StartsWithResult } from './StringUtils'
 import { TextSection } from './TextSection'
 
 export class Parser {
-  public static parse(text: string): ISection[] {
+  public static parse(uri: Uri, text: string): ISection[] {
     const sections: ISection[] = []
     const lines: string[] = Parser.getLines(text)
 
@@ -44,6 +45,7 @@ export class Parser {
         }
 
         currentConflict = new Conflict()
+        currentConflict!.uri = uri
         currentConflict.setTextAfterMarkerOurs(
           startsWithMarkerOursResult.remainingText
         )

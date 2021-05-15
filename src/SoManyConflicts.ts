@@ -15,11 +15,12 @@ export class SoManyConflicts {
         for (const path of filePaths) {
           console.log('Start parsing ' + path)
           // scan and parse all conflict blocks
-          let absPath = workspace + '/' + path
-          let content = readFileSync(absPath, 'utf-8')
-          const sections: ISection[] = Parser.parse(content)
+          let absPath: string = workspace + '/' + path
+          let content: string = readFileSync(absPath, 'utf-8')
+          let uri: vscode.Uri = vscode.Uri.file(absPath)
+
+          const sections: ISection[] = Parser.parse(uri, content)
           // extract identifiers in each conflict block
-          let uri = vscode.Uri.file(absPath)
 
           let symbols = await vscode.commands.executeCommand<
             vscode.DocumentSymbol[]
