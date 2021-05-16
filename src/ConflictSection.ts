@@ -10,6 +10,10 @@ export class ConflictSection implements ISection {
     this.conflict = conflict
   }
 
+  public getConflict(): Conflict {
+    return this.conflict
+  }
+
   public getText(): string {
     return this.conflict.getSqueezedText()
   }

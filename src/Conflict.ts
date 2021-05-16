@@ -3,6 +3,7 @@
 import { Uri } from 'vscode'
 import { Position, Range } from 'vscode'
 import { Constants } from './Constants'
+import { Identifier } from './Identifier'
 
 export class Conflict {
   public uri: Uri | undefined = undefined
@@ -22,6 +23,9 @@ export class Conflict {
     new Position(0, 0)
   )
   public theirRange: Range = new Range(new Position(0, 0), new Position(0, 0))
+  private ourIdentifers: Identifier[] = []
+  private originalIdentifers: Identifier[] = []
+  private theirIdentifers: Identifier[] = []
 
   public getSqueezedText(): string {
     const minNumberOfLines: number = Math.min(
@@ -137,6 +141,18 @@ export class Conflict {
 
   public setTextAfterMarkerTheirs(text: string): void {
     this.textAfterMarkerTheirs = text
+  }
+
+  public addOurIdentifier(identifier: Identifier): void {
+    this.ourIdentifers.push(identifier)
+  }
+
+  public addOriginalIdentifier(identifier: Identifier): void {
+    this.originalIdentifers.push(identifier)
+  }
+
+  public addTheirIdentifier(identifier: Identifier): void {
+    this.theirIdentifers.push(identifier)
   }
 
   public computeRanges(startLine: number, endLine: number) {
