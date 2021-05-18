@@ -102,11 +102,15 @@ export class SoManyConflicts {
     uri: vscode.Uri,
     position: vscode.Position
   ): Promise<vscode.Location[] | undefined> {
-    return await vscode.commands.executeCommand<vscode.Location[]>(
+    let refs = await vscode.commands.executeCommand<vscode.Location[]>(
       'vscode.executeReferenceProvider',
       uri,
       position
     )
+    if (refs !== undefined) {
+      console.log(refs)
+    }
+    return refs
   }
 
   public static async getConflictingFiles(path: string): Promise<string[]> {
