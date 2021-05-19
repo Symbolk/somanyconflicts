@@ -1,46 +1,26 @@
 import * as vscode from 'vscode'
-import simpleGit, { SimpleGit, StatusResult } from 'simple-git'
-import { readFileSync } from 'fs'
 import { Parser } from './Parser'
 import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
 import { Identifier } from './Identifier'
 import { Conflict } from './Conflict'
-// import Graph from 'graph-data-structure'
-var Graph = require("graph-data-structure");
+import { FileUtils } from './FileUtils'
+var graphlib = require('@dagrejs/graphlib')
 
 export class SoManyConflicts {
   public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
     let message: string = ''
     let allConflictSections: ISection[] = []
-    // let uri: vscode.Uri = vscode.Uri.file(
-    //   '/Users/symbolk/coding/vscode/vscode-extension-samples/vim-sample/src/extension.ts'
-    // )
-    // let pos: vscode.Position = new vscode.Position(182, 18)
-
-    // let symbols = await vscode.commands.executeCommand<
-    //         vscode.DocumentSymbol[]
-    //       >('vscode.executeDocumentSymbolProvider', uri)
-    //       if (symbols !== undefined) {
-    //         console.log(symbols)
-    //       }
-    // SoManyConflicts.getRefs(uri, pos).then((refs) => {
-    //   if (refs !== undefined) {
-    //     console.log(refs)
-    //   }
-    // })
 
     // get all files in conflict state in the opened workspace
     try {
-      // case1: git repo
-      let filePaths: string[] = await this.getConflictingFiles(workspace)
-      // TODO: case2: a normal folder
+      let filePaths: string[] = await FileUtils.getConflictingFiles(workspace)
       if (filePaths) {
         for (const path of filePaths) {
           console.log('Start parsing ' + path)
           // scan and parse all conflict blocks
           let absPath: string = workspace + '/' + path
-          let content: string = readFileSync(absPath, 'utf-8')
+          let content: string = FileUtils.readFileContent(absPath)
           let uri: vscode.Uri = vscode.Uri.file(absPath)
 
           const sections: ISection[] = Parser.parse(uri, content)
@@ -49,15 +29,19 @@ export class SoManyConflicts {
           )
 
           // extract identifiers in the whole file
-          let symbols = await vscode.commands.executeCommand<
-            vscode.DocumentSymbol[]
-          >('vscode.executeDocumentSymbolProvider', uri)
+          // P.S. actually the symbol provider is quite unreliable, it often fails to return ALL symbols but only 1-st level
+          // so avoid counting on pure language service
+          let symbols = (await vscode.commands.executeCommand(
+            'vscode.executeDocumentSymbolProvider',
+            uri
+          )) as vscode.DocumentSymbol[]
           if (symbols !== undefined) {
             // will ignore those non-code files (e.g., readme, gradle)
             for (let conflictSection of conflictSections) {
               let conflict = (<ConflictSection>conflictSection).getConflict()
               // filter symbols involved in each conflict block
               this.filterConflictingSymbols(conflict, symbols)
+              // TODO: extract tokens in case that LS fails to resolve
               allConflictSections.push(conflictSection)
             }
 
@@ -74,15 +58,27 @@ export class SoManyConflicts {
 
   public static constructGraph(allConflictSections: ISection[]) {
     // for each pair
-    let graph = Graph()
-    graph.addNode('a')
-    graph.addNode('b')
-    graph.addEdge('a', 'b')
-    graph.addEdge('b', 'c')
-    console.log(graph.topologicalSort())
-    // compare each side identifiers
 
-    // construct edges
+    let i,
+      j: number = 0
+    for (i = 0; i < allConflictSections.length - 1; ++i) {
+      let conflict1: Conflict = (<ConflictSection>(
+        allConflictSections[i]
+      )).getConflict()
+      for (j = i + 1; j < allConflictSections.length; ++j) {
+        let conflict2: Conflict = (<ConflictSection>(
+          allConflictSections[j]
+        )).getConflict()
+      }
+    }
+    let graph = new graphlib.Graph({ directed: true })
+    graph.setNode('a')
+    graph.setNode('b')
+    graph.setEdge('a', 'b')
+    graph.setEdge('b', 'c')
+    console.log(graphlib.alg.topsort(graph))
+
+    // construct graph
 
     // return graph
   }
@@ -144,24 +140,5 @@ export class SoManyConflicts {
       position
     )
     return refs
-  }
-
-  public static async getConflictingFiles(path: string): Promise<string[]> {
-    const git: SimpleGit = simpleGit(path)
-    // const status: StatusResult = await git.status();
-
-    return new Promise((resolve, reject) => {
-      git.diff(
-        ['--name-only', '--diff-filter=U'],
-        (err: any | null, result?: any) => {
-          if (err) {
-            reject(err)
-          } else {
-            let filePaths: string[] = result.split(/\r\n|\r|\n/)
-            resolve(filePaths.filter((s) => s.length > 0))
-          }
-        }
-      )
-    })
   }
 }
