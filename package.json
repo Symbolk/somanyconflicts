@@ -15,14 +15,24 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:somanyconflicts.somany"
+    "onCommand:somanyconflicts.somany",
+    "onCommand:somanyconflicts.next",
+    "onCommand:somanyconflicts.resolve"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "somanyconflicts.somany",
-        "title": "So Many Conflicts"
+        "title": "So Many Conflicts: Where to start?"
+      },
+      {
+        "command": "somanyconflicts.next",
+        "title": "So Many Conflicts: What's next?"
+      },
+      {
+        "command": "somanyconflicts.resolve",
+        "title": "So Many Conflicts: How to resolve?"
       }
     ]
   },

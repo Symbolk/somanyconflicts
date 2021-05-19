@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
+import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
 
 // this method is called when your extension is activated
@@ -12,36 +13,67 @@ export function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "somanyconflicts" is now active!'
   )
 
+  let allConflictSections: ISection[] = []
+
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  let disposable = vscode.commands.registerCommand(
-    'somanyconflicts.somany',
-    () => {
-      let message: string
-      if (vscode.workspace.workspaceFolders !== undefined) {
-        let workspace = vscode.workspace.workspaceFolders[0].uri.path
-        // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-        message = `So Many Conflicts: Workspace: ${workspace}`
-
-        vscode.window.showInformationMessage(message)
-
-        SoManyConflicts.scanAllConflicts(workspace)
-
-        // feature1: topo-sort for the optimal order to resolve conflicts
-        // feature2: recommend the next (related or similar) conflict to resolve
-        // feature3: recommend resolution strategy given conflict resolved before
-		
-      } else {
-        message = 'So Many Conflicts: Please open a working folder first.'
-
-        vscode.window.showErrorMessage(message)
+  // feature1: topo-sort for the optimal order to resolve conflicts
+  context.subscriptions.push(
+    vscode.commands.registerCommand('somanyconflicts.somany', async () => {
+      if (allConflictSections.length == 0) {
+        init()
       }
-    }
+      // construct topo order of all conflict blocks by symbols
+    })
   )
 
-  context.subscriptions.push(disposable)
+  // feature2: recommend the next (related or similar) conflict to resolve
+  context.subscriptions.push(
+    vscode.commands.registerCommand('somanyconflicts.next', async () => {
+      if (allConflictSections.length == 0) {
+        init()
+      }
+    })
+  )
+
+  // feature3: recommend resolution strategy given conflict resolved before
+  context.subscriptions.push(
+    vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
+      if (allConflictSections.length == 0) {
+        init()
+      }
+    })
+  )
+}
+
+async function init(): Promise<ISection[]> {
+  let message: string = ''
+  let allConflictSections: ISection[] = []
+  if (vscode.workspace.workspaceFolders !== undefined) {
+    let workspace = vscode.workspace.workspaceFolders[0].uri.path
+    // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
+
+    message = `Finding the starting point to resolve so many conflict blocks.`
+
+    vscode.window.showInformationMessage(message)
+
+    allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
+
+    // construct topo order of all conflict blocks by symbols
+
+    // application
+
+    // feature1: topo-sort for the optimal order to resolve conflicts
+    // feature2: recommend the next (related or similar) conflict to resolve
+    // feature3: recommend resolution strategy given conflict resolved before
+  } else {
+    message = 'So Many Conflicts: Please open a working folder first.'
+
+    vscode.window.showErrorMessage(message)
+  }
+  return allConflictSections
 }
 
 // this method is called when your extension is deactivated
