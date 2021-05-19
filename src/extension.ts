@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.somany', async () => {
       if (allConflictSections.length == 0) {
-        init()
+        await init()
       }
       // construct topo order of all conflict blocks
       SoManyConflicts.constructGraph(allConflictSections)
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.next', async () => {
       if (allConflictSections.length == 0) {
-        init()
+        await init()
       }
       // locate the focusing conflict and start from it
     })
@@ -46,7 +46,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
       if (allConflictSections.length == 0) {
-        init()
+        awaitinit()
       }
       // locate the focusing conflict and start from it
       // record previously resolution strategy of related conflicts
@@ -62,7 +62,7 @@ async function init(): Promise<ISection[]> {
     let workspace = vscode.workspace.workspaceFolders[0].uri.path
     // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-    message = `Finding the starting point to resolve so many conflict blocks.`
+    message = `Finding the starting point to resolve so many conflict blocks...`
 
     vscode.window.showInformationMessage(message)
 
