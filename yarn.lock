@@ -791,6 +791,11 @@ graceful-fs@^4.1.2, graceful-fs@^4.2.2:
   resolved "https://registry.nlark.com/graceful-fs/download/graceful-fs-4.2.6.tgz#ff040b2b0853b23c3d31027523706f1885d76bee"
   integrity sha1-/wQLKwhTsjw9MQJ1I3BvGIXXa+4=
 
+graph-data-structure@^1.13.0:
+  version "1.13.0"
+  resolved "https://registry.nlark.com/graph-data-structure/download/graph-data-structure-1.13.0.tgz#78daac4b6b0dac7b096d709c48579590097f3fbd"
+  integrity sha1-eNqsS2sNrHsJbXCcSFeVkAl/P70=
+
 growl@1.10.5:
   version "1.10.5"
   resolved "https://registry.npm.taobao.org/growl/download/growl-1.10.5.tgz#f2735dc2283674fa67478b10181059355c369e5e"

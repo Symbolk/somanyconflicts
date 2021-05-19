@@ -58,6 +58,7 @@
     "vscode-test": "^1.5.0"
   },
   "dependencies": {
+    "graph-data-structure": "^1.13.0",
     "simple-git": "^2.38.0"
   }
 }

@@ -13,7 +13,9 @@ export function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "somanyconflicts" is now active!'
   )
 
+  // raw conflict blocks
   let allConflictSections: ISection[] = []
+  // ordered conflicts blocks in a Adjacency List form graph
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
@@ -25,7 +27,8 @@ export function activate(context: vscode.ExtensionContext) {
       if (allConflictSections.length == 0) {
         init()
       }
-      // construct topo order of all conflict blocks by symbols
+      // construct topo order of all conflict blocks
+      SoManyConflicts.constructGraph(allConflictSections)
     })
   )
 
@@ -35,6 +38,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (allConflictSections.length == 0) {
         init()
       }
+      // locate the focusing conflict and start from it
     })
   )
 
@@ -44,6 +48,9 @@ export function activate(context: vscode.ExtensionContext) {
       if (allConflictSections.length == 0) {
         init()
       }
+      // locate the focusing conflict and start from it
+      // record previously resolution strategy of related conflicts
+      // suggest resolution strategy accordingly
     })
   )
 }

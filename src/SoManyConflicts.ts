@@ -6,6 +6,8 @@ import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
 import { Identifier } from './Identifier'
 import { Conflict } from './Conflict'
+// import Graph from 'graph-data-structure'
+var Graph = require("graph-data-structure");
 
 export class SoManyConflicts {
   public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
@@ -51,6 +53,7 @@ export class SoManyConflicts {
             vscode.DocumentSymbol[]
           >('vscode.executeDocumentSymbolProvider', uri)
           if (symbols !== undefined) {
+            // will ignore those non-code files (e.g., readme, gradle)
             for (let conflictSection of conflictSections) {
               let conflict = (<ConflictSection>conflictSection).getConflict()
               // filter symbols involved in each conflict block
@@ -67,6 +70,21 @@ export class SoManyConflicts {
       vscode.window.showInformationMessage(err.message)
     }
     return allConflictSections
+  }
+
+  public static constructGraph(allConflictSections: ISection[]) {
+    // for each pair
+    let graph = Graph()
+    graph.addNode('a')
+    graph.addNode('b')
+    graph.addEdge('a', 'b')
+    graph.addEdge('b', 'c')
+    console.log(graph.topologicalSort())
+    // compare each side identifiers
+
+    // construct edges
+
+    // return graph
   }
 
   private static async filterConflictingSymbols(
@@ -125,9 +143,6 @@ export class SoManyConflicts {
       uri,
       position
     )
-    if (refs !== undefined) {
-      console.log(refs)
-    }
     return refs
   }
 
