@@ -35,15 +35,14 @@ export class SoManyConflicts {
             'vscode.executeDocumentSymbolProvider',
             uri
           )) as vscode.DocumentSymbol[]
-          if (symbols !== undefined) {
-            // will ignore those non-code files (e.g., readme, gradle)
-            for (let conflictSection of conflictSections) {
-              let conflict = (<ConflictSection>conflictSection).getConflict()
-              // filter symbols involved in each conflict block
+          for (let conflictSection of conflictSections) {
+            let conflict = (<ConflictSection>conflictSection).getConflict()
+            // filter symbols involved in each conflict block
+            if (symbols !== undefined) {
               this.filterConflictingSymbols(conflict, symbols)
-              // TODO: extract tokens in case that LS fails to resolve
-              allConflictSections.push(conflictSection)
             }
+            // TODO: extract tokens in case that LS fails to resolve
+            allConflictSections.push(conflictSection)
 
             console.log(conflictSections)
           }
