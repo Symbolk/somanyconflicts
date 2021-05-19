@@ -8,12 +8,31 @@ import { Identifier } from './Identifier'
 import { Conflict } from './Conflict'
 
 export class SoManyConflicts {
-  public static async scanAllConflicts(workspace: string): Promise<void> {
+  public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
     let message: string = ''
+    let allConflictSections: ISection[] = []
+    // let uri: vscode.Uri = vscode.Uri.file(
+    //   '/Users/symbolk/coding/vscode/vscode-extension-samples/vim-sample/src/extension.ts'
+    // )
+    // let pos: vscode.Position = new vscode.Position(182, 18)
+
+    // let symbols = await vscode.commands.executeCommand<
+    //         vscode.DocumentSymbol[]
+    //       >('vscode.executeDocumentSymbolProvider', uri)
+    //       if (symbols !== undefined) {
+    //         console.log(symbols)
+    //       }
+    // SoManyConflicts.getRefs(uri, pos).then((refs) => {
+    //   if (refs !== undefined) {
+    //     console.log(refs)
+    //   }
+    // })
+
     // get all files in conflict state in the opened workspace
-    // case1: git repo
     try {
+      // case1: git repo
       let filePaths: string[] = await this.getConflictingFiles(workspace)
+      // TODO: case2: a normal folder
       if (filePaths) {
         for (const path of filePaths) {
           console.log('Start parsing ' + path)
@@ -36,19 +55,18 @@ export class SoManyConflicts {
               let conflict = (<ConflictSection>conflictSection).getConflict()
               // filter symbols involved in each conflict block
               this.filterConflictingSymbols(conflict, symbols)
+              allConflictSections.push(conflictSection)
             }
 
             console.log(conflictSections)
           }
-          // construct topo order of all conflict blocks by symbols
-
-          // application
         }
       }
       console.log()
     } catch (err) {
       vscode.window.showInformationMessage(err.message)
     }
+    return allConflictSections
   }
 
   private static async filterConflictingSymbols(
