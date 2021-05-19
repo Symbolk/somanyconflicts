@@ -14,6 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
     'Congratulations, your extension "somanyconflicts" is now active!'
   )
 
+  let message: string = ''
   // raw conflict blocks
   let allConflictSections: ISection[] = []
   let graph: typeof Graph | undefined = undefined
@@ -25,9 +26,16 @@ export function activate(context: vscode.ExtensionContext) {
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.somany', async () => {
-      if (allConflictSections.length == 0 || graph == undefined) {
+      if (!isReady()) {
         await init()
       }
+      if (!isReady()) {
+        message = 'Something goes wrong.'
+        vscode.window.showErrorMessage(message)
+        return
+      }
+      message = `Finding the starting point to resolve conflicts...`
+      vscode.window.showInformationMessage(message)
       SoManyConflicts.getStartingPoint(allConflictSections, graph)
     })
   )
@@ -35,7 +43,7 @@ export function activate(context: vscode.ExtensionContext) {
   // feature2: recommend the next (related or similar) conflict to resolve
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.next', async () => {
-      if (allConflictSections.length == 0 || graph == undefined) {
+      if (!isReady()) {
         await init()
       }
       // locate the focusing conflict and start from it
@@ -45,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
   // feature3: recommend resolution strategy given conflict resolved before
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
-      if (allConflictSections.length == 0 || graph == undefined) {
+      if (!isReady()) {
         await init()
       }
       // locate the focusing conflict and start from it
@@ -54,6 +62,11 @@ export function activate(context: vscode.ExtensionContext) {
     })
   )
 
+  // check if the workspace is readily prepared
+  function isReady(): boolean {
+    return allConflictSections.length != 0 && graph && graph !== undefined
+  }
+
   async function init(): Promise<void> {
     let message: string = ''
     // let allConflictSections: ISection[] = []
@@ -61,15 +74,25 @@ export function activate(context: vscode.ExtensionContext) {
       let workspace = vscode.workspace.workspaceFolders[0].uri.path
       // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-      message = `Finding the starting point to resolve so many conflict blocks...`
-
+      message = `Scanning so many conflicts in your workspace...`
       vscode.window.showInformationMessage(message)
 
       allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
-      // construct a graph to keep relations of conflicts
-      graph = SoManyConflicts.constructGraph(allConflictSections)
+      if (allConflictSections.length == 0) {
+        message = 'Found no merge conflicts in the opened workspace.'
+        vscode.window.showErrorMessage(message)
+        return
+      } else {
+        // construct a graph to keep relations of conflicts
+        graph = SoManyConflicts.constructGraph(allConflictSections)
+        if (graph == undefined) {
+          message = 'Failed to construct graph for the opened workspace.'
+          vscode.window.showErrorMessage(message)
+          return
+        }
+      }
     } else {
-      message = 'So Many Conflicts: Please open a working folder first.'
+      message = 'Please open a workspace with merge conflicts first.'
       vscode.window.showErrorMessage(message)
       return
     }
