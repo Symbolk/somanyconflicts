@@ -5,6 +5,7 @@ import { ConflictSection } from './ConflictSection'
 import { Identifier } from './Identifier'
 import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
+import { AlgUtils } from './AlgUtils'
 var graphlib = require('@dagrejs/graphlib')
 
 export class SoManyConflicts {
@@ -56,10 +57,18 @@ export class SoManyConflicts {
   }
 
   public static constructGraph(allConflictSections: ISection[]) {
-    // for each pair
+    let graph = new graphlib.Graph({ directed: true })
 
+    // for each pair of conflicts
     let i,
       j: number = 0
+
+    // construct graph nodes
+    for (i = 0; i < allConflictSections.length - 1; ++i) {
+      graph.setNode(i.toString())
+    }
+
+    // construct graph edges
     for (i = 0; i < allConflictSections.length - 1; ++i) {
       let conflict1: Conflict = (<ConflictSection>(
         allConflictSections[i]
@@ -68,18 +77,23 @@ export class SoManyConflicts {
         let conflict2: Conflict = (<ConflictSection>(
           allConflictSections[j]
         )).getConflict()
+        let weight = AlgUtils.estimateRelevance(conflict1, conflict2)
+        if (weight > 0) {
+          let lastWeight = graph.edge()
+          if (lastWeight == undefined) {
+            graph.setEdge(i.toString, j.toString, weight)
+          } else {
+            graph.setEdge(i.toString, j.toString, lastWeight + weight)
+          }
+        }
       }
     }
-    let graph = new graphlib.Graph({ directed: true })
-    graph.setNode('a')
-    graph.setNode('b')
-    graph.setEdge('a', 'b')
-    graph.setEdge('b', 'c')
-    console.log(graphlib.alg.topsort(graph))
+    // console.log(graphlib.alg.topsort(graph))
+    return graph
+  }
 
-    // construct graph
-
-    // return graph
+  public static getStartingPoint(allConflictSections: ISection[], graph: any) {
+    throw new Error('Method not implemented.')
   }
 
   private static async filterConflictingSymbols(

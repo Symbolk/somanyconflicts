@@ -23,9 +23,9 @@ export class Conflict {
     new Position(0, 0)
   )
   public theirRange: Range = new Range(new Position(0, 0), new Position(0, 0))
-  private ourIdentifers: Identifier[] = []
-  private originalIdentifers: Identifier[] = []
-  private theirIdentifers: Identifier[] = []
+  public ourIdentifers: Identifier[] = []
+  public originalIdentifers: Identifier[] = []
+  public theirIdentifers: Identifier[] = []
 
   public getSqueezedText(): string {
     const minNumberOfLines: number = Math.min(
