@@ -3,6 +3,7 @@
 import * as vscode from 'vscode'
 import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
+var Graph = require('@dagrejs/graphlib').Graph
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -15,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // raw conflict blocks
   let allConflictSections: ISection[] = []
-  // ordered conflicts blocks in a Adjacency List form graph
+  let graph: typeof Graph | undefined = undefined
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
@@ -24,18 +25,17 @@ export function activate(context: vscode.ExtensionContext) {
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.somany', async () => {
-      if (allConflictSections.length == 0) {
+      if (allConflictSections.length == 0 || graph == undefined) {
         await init()
       }
-      // construct topo order of all conflict blocks
-      SoManyConflicts.constructGraph(allConflictSections)
+      SoManyConflicts.getStartingPoint(allConflictSections, graph)
     })
   )
 
   // feature2: recommend the next (related or similar) conflict to resolve
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.next', async () => {
-      if (allConflictSections.length == 0) {
+      if (allConflictSections.length == 0 || graph == undefined) {
         await init()
       }
       // locate the focusing conflict and start from it
@@ -45,42 +45,36 @@ export function activate(context: vscode.ExtensionContext) {
   // feature3: recommend resolution strategy given conflict resolved before
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
-      if (allConflictSections.length == 0) {
-        awaitinit()
+      if (allConflictSections.length == 0 || graph == undefined) {
+        await init()
       }
       // locate the focusing conflict and start from it
       // record previously resolution strategy of related conflicts
       // suggest resolution strategy accordingly
     })
   )
-}
 
-async function init(): Promise<ISection[]> {
-  let message: string = ''
-  let allConflictSections: ISection[] = []
-  if (vscode.workspace.workspaceFolders !== undefined) {
-    let workspace = vscode.workspace.workspaceFolders[0].uri.path
-    // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
+  async function init(): Promise<void> {
+    let message: string = ''
+    // let allConflictSections: ISection[] = []
+    if (vscode.workspace.workspaceFolders !== undefined) {
+      let workspace = vscode.workspace.workspaceFolders[0].uri.path
+      // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-    message = `Finding the starting point to resolve so many conflict blocks...`
+      message = `Finding the starting point to resolve so many conflict blocks...`
 
-    vscode.window.showInformationMessage(message)
+      vscode.window.showInformationMessage(message)
 
-    allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
-
-    // construct topo order of all conflict blocks by symbols
-
-    // application
-
-    // feature1: topo-sort for the optimal order to resolve conflicts
-    // feature2: recommend the next (related or similar) conflict to resolve
-    // feature3: recommend resolution strategy given conflict resolved before
-  } else {
-    message = 'So Many Conflicts: Please open a working folder first.'
-
-    vscode.window.showErrorMessage(message)
+      allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
+      // construct a graph to keep relations of conflicts
+      graph = SoManyConflicts.constructGraph(allConflictSections)
+    } else {
+      message = 'So Many Conflicts: Please open a working folder first.'
+      vscode.window.showErrorMessage(message)
+      return
+    }
+    // return allConflictSections
   }
-  return allConflictSections
 }
 
 // this method is called when your extension is deactivated
