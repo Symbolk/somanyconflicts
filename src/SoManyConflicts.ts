@@ -88,11 +88,25 @@ export class SoManyConflicts {
         }
       }
     }
-    // console.log(graphlib.alg.topsort(graph))
     return graph
   }
 
-  public static getStartingPoint(allConflictSections: ISection[], graph: any) {
+  public static suggestStartingPoint(
+    allConflictSections: ISection[],
+    graph: any
+  ) {
+    // console.log(graphlib.alg.topsort(graph))
+    throw new Error('Method not implemented.')
+  }
+
+  public static suggestResolutionStrategy(
+    allConflictSections: ISection[],
+    graph: any
+  ) {
+    throw new Error('Method not implemented.')
+  }
+
+  static suggestNextConflict(allConflictSections: ISection[], graph: any) {
     throw new Error('Method not implemented.')
   }
 

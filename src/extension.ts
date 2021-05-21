@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
       message = `Finding the starting point to resolve conflicts...`
       vscode.window.showInformationMessage(message)
-      SoManyConflicts.getStartingPoint(allConflictSections, graph)
+      SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
     })
   )
 
@@ -47,6 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
         await init()
       }
       // locate the focusing conflict and start from it
+      SoManyConflicts.suggestNextConflict(allConflictSections, graph)
     })
   )
 
@@ -56,9 +57,12 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await init()
       }
+      // TODO: record resolution strategy of conflicts
+
       // locate the focusing conflict and start from it
-      // record previously resolution strategy of related conflicts
+      // query previously resolved related conflicts
       // suggest resolution strategy accordingly
+      SoManyConflicts.suggestResolutionStrategy(allConflictSections, graph)
     })
   )
 
