@@ -37,7 +37,7 @@ export class SoManyConflicts {
             uri
           )) as vscode.DocumentSymbol[]
           for (let conflictSection of conflictSections) {
-            let conflict = (<ConflictSection>conflictSection).getConflict()
+            let conflict = (<ConflictSection>conflictSection).conflict
             // filter symbols involved in each conflict block
             if (symbols !== undefined) {
               this.filterConflictingSymbols(conflict, symbols)
@@ -70,13 +70,11 @@ export class SoManyConflicts {
 
     // construct graph edges
     for (i = 0; i < allConflictSections.length - 1; ++i) {
-      let conflict1: Conflict = (<ConflictSection>(
-        allConflictSections[i]
-      )).getConflict()
+      let conflict1: Conflict = (<ConflictSection>allConflictSections[i])
+        .conflict
       for (j = i + 1; j < allConflictSections.length; ++j) {
-        let conflict2: Conflict = (<ConflictSection>(
-          allConflictSections[j]
-        )).getConflict()
+        let conflict2: Conflict = (<ConflictSection>allConflictSections[j])
+          .conflict
         let weight = AlgUtils.estimateRelevance(conflict1, conflict2)
         if (weight > 0) {
           let lastWeight = graph.edge()
