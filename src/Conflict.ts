@@ -14,6 +14,7 @@ export class Conflict {
   private textAfterMarkerTheirs: string | undefined = undefined
   private textAfterMarkerEnd: string | undefined = undefined
 
+  public range: Range = new Range(new Position(0, 0), new Position(0, 0))
   private ourLines: string[] = []
   private originalLines: string[] = []
   private theirLines: string[] = []
@@ -198,5 +199,16 @@ export class Conflict {
         )
       )
     }
+
+    this.range = new Range(
+      new Position(startLine, 0),
+      new Position(
+        endLine,
+        Constants.conflictMarkerEnd.length +
+          (this.textAfterMarkerEnd === undefined
+            ? 0
+            : this.textAfterMarkerEnd.length)
+      )
+    )
   }
 }

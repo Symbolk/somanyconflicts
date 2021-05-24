@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
+import { ConflictLensProvider } from './ConflictLensProvider'
 import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
 var Graph = require('@dagrejs/graphlib').Graph
@@ -39,6 +40,13 @@ export function activate(context: vscode.ExtensionContext) {
       SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
     })
   )
+
+  let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider(
+    '*',
+    new ConflictLensProvider()
+  )
+  // push the command and CodeLens provider to the context so it can be disposed of later
+  context.subscriptions.push(codeLensProviderDisposable)
 
   // feature2: recommend the next (related or similar) conflict to resolve
   context.subscriptions.push(
