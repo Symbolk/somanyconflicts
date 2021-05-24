@@ -59,6 +59,6 @@
   },
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
-    "simple-git": "^2.38.0"
+    "simple-git": "^2.39.0"
   }
 }

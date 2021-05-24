@@ -27,36 +27,39 @@ export class SoManyConflicts {
       let filePaths: string[] = await FileUtils.getConflictingFilePaths(
         workspace
       )
-      if (filePaths) {
-        for (const absPath of filePaths) {
-          console.log('Start parsing ' + absPath)
-          // scan and parse all conflict blocks
-          let content: string = FileUtils.readFileContent(absPath)
-          let uri: Uri = Uri.file(absPath)
+      if (filePaths.length == 0) {
+        message = 'Found no conflicting files in the workspace!'
+        window.showWarningMessage(message)
+        return allConflictSections
+      }
+      for (const absPath of filePaths) {
+        console.log('Start parsing ' + absPath)
+        // scan and parse all conflict blocks
+        let content: string = FileUtils.readFileContent(absPath)
+        let uri: Uri = Uri.file(absPath)
 
-          const sections: ISection[] = Parser.parse(uri, content)
-          const conflictSections: ISection[] = sections.filter(
-            (sec) => sec instanceof ConflictSection
-          )
+        const sections: ISection[] = Parser.parse(uri, content)
+        const conflictSections: ISection[] = sections.filter(
+          (sec) => sec instanceof ConflictSection
+        )
 
-          // extract identifiers in the whole file
-          // P.S. actually the symbol provider is quite unreliable, it often fails to return ALL symbols but only 1-st level
-          // so avoid counting on pure language service
-          let symbols = (await commands.executeCommand(
-            'vscode.executeDocumentSymbolProvider',
-            uri
-          )) as DocumentSymbol[]
-          for (let conflictSection of conflictSections) {
-            let conflict = (<ConflictSection>conflictSection).conflict
-            // filter symbols involved in each conflict block
-            if (symbols !== undefined) {
-              this.filterConflictingSymbols(conflict, symbols)
-            }
-            // TODO: extract tokens in case that LS fails to resolve
-            allConflictSections.push(conflictSection)
-
-            console.log(conflictSections)
+        // extract identifiers in the whole file
+        // P.S. actually the symbol provider is quite unreliable, it often fails to return ALL symbols but only 1-st level
+        // so avoid counting on pure language service
+        let symbols = (await commands.executeCommand(
+          'vscode.executeDocumentSymbolProvider',
+          uri
+        )) as DocumentSymbol[]
+        for (let conflictSection of conflictSections) {
+          let conflict = (<ConflictSection>conflictSection).conflict
+          // filter symbols involved in each conflict block
+          if (symbols !== undefined) {
+            this.filterConflictingSymbols(conflict, symbols)
           }
+          // TODO: extract tokens in case that LS fails to resolve
+          allConflictSections.push(conflictSection)
+
+          console.log(conflictSections)
         }
       }
     } catch (err) {

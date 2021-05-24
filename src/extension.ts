@@ -114,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
 
       allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
       if (allConflictSections.length == 0) {
-        message = 'Found no merge conflicts in the opened workspace.'
+        message = 'Found no merge conflicts in the opened workspace!'
         vscode.window.showWarningMessage(message)
         return
       } else {
