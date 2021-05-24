@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
+import { Conflict } from './Conflict'
 import { ConflictLensProvider } from './ConflictLensProvider'
 import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
@@ -19,10 +20,6 @@ export function activate(context: vscode.ExtensionContext) {
   // raw conflict blocks
   let allConflictSections: ISection[] = []
   let graph: typeof Graph | undefined = undefined
-
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
 
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
@@ -50,13 +47,39 @@ export function activate(context: vscode.ExtensionContext) {
 
   // feature2: recommend the next (related or similar) conflict to resolve
   context.subscriptions.push(
-    vscode.commands.registerCommand('somanyconflicts.next', async () => {
-      if (!isReady()) {
-        await init()
+    vscode.commands.registerCommand(
+      'somanyconflicts.next',
+      async (...args: any[]) => {
+        let conflict: Conflict | null
+
+        // If launched with known context, take the conflict from that
+        if (args[0] === 'current-conflict') {
+          conflict = args[1]
+        } else {
+          // Attempt to find a conflict that matches the current cursor position
+          conflict = SoManyConflicts.findConflictContainingSelection(
+            vscode.window.activeTextEditor
+          )
+        }
+
+        if (!conflict) {
+          vscode.window.showWarningMessage(
+            'Editor cursor is not within any merge conflict!'
+          )
+          return
+        }
+
+        if (!isReady()) {
+          await init()
+        }
+        // locate the focusing conflict and start from it
+        SoManyConflicts.suggestNextConflict(
+          allConflictSections,
+          conflict,
+          graph
+        )
       }
-      // locate the focusing conflict and start from it
-      SoManyConflicts.suggestNextConflict(allConflictSections, graph)
-    })
+    )
   )
 
   // feature3: recommend resolution strategy given conflict resolved before
@@ -103,6 +126,9 @@ export function activate(context: vscode.ExtensionContext) {
           return
         }
       }
+
+      message = 'Found ' + allConflictSections.length + ' conflicts in total.'
+      vscode.window.showInformationMessage(message)
     } else {
       message = 'Please open a workspace with merge conflicts first.'
       vscode.window.showErrorMessage(message)

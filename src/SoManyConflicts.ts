@@ -104,8 +104,12 @@ export class SoManyConflicts {
     throw new Error('Method not implemented.')
   }
 
-  static suggestNextConflict(allConflictSections: ISection[], graph: any) {
-    throw new Error('Method not implemented.')
+  static suggestNextConflict(
+    allConflictSections: ISection[],
+    conflict: Conflict,
+    graph: any
+  ) {
+    console.log(conflict)
   }
 
   private static async filterConflictingSymbols(
@@ -165,5 +169,38 @@ export class SoManyConflicts {
       position
     )
     return refs
+  }
+
+  public static findConflictContainingSelection(
+    editor: vscode.TextEditor | undefined,
+    conflicts?: Conflict[]
+  ): Conflict | null {
+    if (!editor) {
+      return null
+    }
+
+    if (!conflicts) {
+      const sections: ISection[] = Parser.parse(
+        editor.document.uri,
+        editor.document.getText()
+      )
+      for (let section of sections) {
+        if (section instanceof ConflictSection) {
+          conflicts!.push((<ConflictSection>section).conflict)
+        }
+      }
+    }
+
+    if (!conflicts || conflicts.length === 0) {
+      return null
+    }
+
+    for (const conflict of conflicts) {
+      if (conflict.range.contains(editor.selection.active)) {
+        return conflict
+      }
+    }
+
+    return null
   }
 }

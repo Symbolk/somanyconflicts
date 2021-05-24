@@ -32,12 +32,12 @@ export class ConflictLensProvider implements CodeLensProvider {
       let nextCommand: Command = {
         command: 'somanyconflicts.next',
         title: 'Show Related Conflicts',
-        arguments: ['conflict', conflictSection],
+        arguments: ['current-conflict', conflictSection.conflict],
       }
       let strategyCommand: Command = {
         command: 'somanyconflicts.how',
         title: 'Recommend Resolution',
-        arguments: ['conflict', conflictSection],
+        arguments: ['current-conflict', conflictSection.conflict],
       }
 
       let range: Range = conflictSection.conflict.range
