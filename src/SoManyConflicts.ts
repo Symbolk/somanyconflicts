@@ -24,12 +24,13 @@ export class SoManyConflicts {
 
     // get all files in conflict state in the opened workspace
     try {
-      let filePaths: string[] = await FileUtils.getConflictingFiles(workspace)
+      let filePaths: string[] = await FileUtils.getConflictingFilePaths(
+        workspace
+      )
       if (filePaths) {
-        for (const path of filePaths) {
-          console.log('Start parsing ' + path)
+        for (const absPath of filePaths) {
+          console.log('Start parsing ' + absPath)
           // scan and parse all conflict blocks
-          let absPath: string = workspace + '/' + path
           let content: string = FileUtils.readFileContent(absPath)
           let uri: Uri = Uri.file(absPath)
 
@@ -58,9 +59,8 @@ export class SoManyConflicts {
           }
         }
       }
-      console.log()
     } catch (err) {
-      window.showInformationMessage(err.message)
+      window.showErrorMessage(err.message)
     }
     return allConflictSections
   }
@@ -102,15 +102,14 @@ export class SoManyConflicts {
     allConflictSections: ISection[],
     graph: any
   ) {
-    // console.log(graphlib.alg.topsort(graph))
-    throw new Error('Method not implemented.')
+    console.log(graphlib.alg.topsort(graph))
   }
 
   public static suggestResolutionStrategy(
     allConflictSections: ISection[],
     graph: any
   ) {
-    throw new Error('Method not implemented.')
+    console.log('No suggestion.')
   }
 
   static suggestNextConflict(

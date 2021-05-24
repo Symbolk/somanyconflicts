@@ -27,11 +27,11 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await init()
       }
-      if (!isReady()) {
-        message = 'Something goes wrong.'
-        vscode.window.showErrorMessage(message)
-        return
-      }
+      // if (!isReady()) {
+      //   message = 'Something goes wrong.'
+      //   vscode.window.showWarningMessage(message)
+      //   return
+      // }
       message = `Finding the starting point to resolve conflicts...`
       vscode.window.showInformationMessage(message)
       SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
@@ -115,7 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
       allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
       if (allConflictSections.length == 0) {
         message = 'Found no merge conflicts in the opened workspace.'
-        vscode.window.showErrorMessage(message)
+        vscode.window.showWarningMessage(message)
         return
       } else {
         // construct a graph to keep relations of conflicts
@@ -131,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage(message)
     } else {
       message = 'Please open a workspace with merge conflicts first.'
-      vscode.window.showErrorMessage(message)
+      vscode.window.showWarningMessage(message)
       return
     }
     // return allConflictSections
