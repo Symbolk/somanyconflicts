@@ -127,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
       }
 
-      message = 'Found ' + allConflictSections.length + ' conflicts in total.'
+      message = 'Found '+ allConflictSections.length + ' conflicts in total.'
       vscode.window.showInformationMessage(message)
     } else {
       message = 'Please open a workspace with merge conflicts first.'

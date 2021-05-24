@@ -1,4 +1,13 @@
-import * as vscode from 'vscode'
+import {
+  window,
+  TextEditor,
+  Uri,
+  Range,
+  Location,
+  Position,
+  commands,
+  DocumentSymbol,
+} from 'vscode'
 import { Parser } from './Parser'
 import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
@@ -22,7 +31,7 @@ export class SoManyConflicts {
           // scan and parse all conflict blocks
           let absPath: string = workspace + '/' + path
           let content: string = FileUtils.readFileContent(absPath)
-          let uri: vscode.Uri = vscode.Uri.file(absPath)
+          let uri: Uri = Uri.file(absPath)
 
           const sections: ISection[] = Parser.parse(uri, content)
           const conflictSections: ISection[] = sections.filter(
@@ -32,10 +41,10 @@ export class SoManyConflicts {
           // extract identifiers in the whole file
           // P.S. actually the symbol provider is quite unreliable, it often fails to return ALL symbols but only 1-st level
           // so avoid counting on pure language service
-          let symbols = (await vscode.commands.executeCommand(
+          let symbols = (await commands.executeCommand(
             'vscode.executeDocumentSymbolProvider',
             uri
-          )) as vscode.DocumentSymbol[]
+          )) as DocumentSymbol[]
           for (let conflictSection of conflictSections) {
             let conflict = (<ConflictSection>conflictSection).conflict
             // filter symbols involved in each conflict block
@@ -51,7 +60,7 @@ export class SoManyConflicts {
       }
       console.log()
     } catch (err) {
-      vscode.window.showInformationMessage(err.message)
+      window.showInformationMessage(err.message)
     }
     return allConflictSections
   }
@@ -109,12 +118,23 @@ export class SoManyConflicts {
     conflict: Conflict,
     graph: any
   ) {
+    let locations: Location[] = []
+    locations.push(new Location(conflict.uri!, conflict.theirRange.start))
+    locations.push(new Location(conflict.uri!, conflict.originalRange.start))
+
+    commands.executeCommand(
+      'editor.action.peekLocations',
+      conflict.uri,
+      conflict.ourRange.start,
+      locations,
+      'peek'
+    )
     console.log(conflict)
   }
 
   private static async filterConflictingSymbols(
     conflict: Conflict,
-    symbols: vscode.DocumentSymbol[]
+    symbols: DocumentSymbol[]
   ) {
     for (let symbol of symbols) {
       if (conflict.ourRange.contains(symbol.selectionRange)) {
@@ -152,18 +172,19 @@ export class SoManyConflicts {
       }
     }
   }
-  private static middlePosition(range: vscode.Range): vscode.Position {
-    return new vscode.Position(
+  private static middlePosition(range: Range): Position {
+    return new Position(
       Math.round((range.start.line + range.end.line) / 2),
       Math.round((range.start.character + range.end.character) / 2)
     )
   }
 
   private static async getRefs(
-    uri: vscode.Uri,
-    position: vscode.Position
-  ): Promise<vscode.Location[] | undefined> {
-    let refs = await vscode.commands.executeCommand<vscode.Location[]>(
+    uri: Uri,
+    position: Position
+  ): Promise<Location[] | undefined> {
+    // let refs = undefined
+    let refs = await commands.executeCommand<Location[]>(
       'vscode.executeReferenceProvider',
       uri,
       position
@@ -172,7 +193,7 @@ export class SoManyConflicts {
   }
 
   public static findConflictContainingSelection(
-    editor: vscode.TextEditor | undefined,
+    editor: TextEditor | undefined,
     conflicts?: Conflict[]
   ): Conflict | null {
     if (!editor) {
