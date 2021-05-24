@@ -111,24 +111,47 @@ export function activate(context: vscode.ExtensionContext) {
 
       message = `Scanning so many conflicts in your workspace...`
       vscode.window.showInformationMessage(message)
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Scanning so many conflicts in your workspace...',
+          cancellable: true,
+        },
+        async (progress, token) => {
+          token.onCancellationRequested(() => {
+            console.log('User canceled the scanning.')
+          })
 
-      allConflictSections = await SoManyConflicts.scanAllConflicts(workspace)
-      if (allConflictSections.length == 0) {
-        message = 'Found no merge conflicts in the opened workspace!'
-        vscode.window.showWarningMessage(message)
-        return
-      } else {
-        // construct a graph to keep relations of conflicts
-        graph = SoManyConflicts.constructGraph(allConflictSections)
-        if (graph == undefined) {
-          message = 'Failed to construct graph for the opened workspace.'
-          vscode.window.showErrorMessage(message)
-          return
+          // progress.report({ increment: 0 })
+
+          // setTimeout(() => {
+          //   progress.report({ increment: 10 })
+          // }, 1000)
+
+          allConflictSections = await SoManyConflicts.scanAllConflicts(
+            workspace
+          )
+          if (allConflictSections.length == 0) {
+            message = 'Found no merge conflicts in the opened workspace!'
+            vscode.window.showWarningMessage(message)
+            return
+          } else {
+            // construct a graph to keep relations of conflicts
+            graph = SoManyConflicts.constructGraph(allConflictSections)
+            if (graph == undefined) {
+              message = 'Failed to construct graph for the opened workspace.'
+              vscode.window.showErrorMessage(message)
+              return
+            }
+          }
+
+          message =
+            'Found ' + allConflictSections.length + ' conflicts in total.'
+          vscode.window.showInformationMessage(message)
+
+          // progress.report({ increment: 100 })
         }
-      }
-
-      message = 'Found '+ allConflictSections.length + ' conflicts in total.'
-      vscode.window.showInformationMessage(message)
+      )
     } else {
       message = 'Please open a workspace with merge conflicts first.'
       vscode.window.showWarningMessage(message)
