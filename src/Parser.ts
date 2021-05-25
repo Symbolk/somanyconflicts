@@ -24,8 +24,8 @@ export class Parser {
       const startsWithMarkerOursResult: StartsWithResult =
         StringUtils.startsWith(line, Constants.conflictMarkerOurs)
 
-      const startsWithMarkerOriginalResult: StartsWithResult =
-        StringUtils.startsWith(line, Constants.conflictMarkerOriginal)
+      const startsWithMarkerBaseResult: StartsWithResult =
+        StringUtils.startsWith(line, Constants.conflictMarkerBase)
 
       const startsWithMarkerTheirsResult: StartsWithResult =
         StringUtils.startsWith(line, Constants.conflictMarkerTheirs)
@@ -50,18 +50,18 @@ export class Parser {
           startsWithMarkerOursResult.remainingText
         )
         state = ParserState.Ours
-      } else if (startsWithMarkerOriginalResult.success) {
+      } else if (startsWithMarkerBaseResult.success) {
         if (state !== ParserState.Ours) {
           throw new Error('Unexpected conflict marker')
         }
 
-        currentConflict!.hasOriginal = true
-        currentConflict!.setTextAfterMarkerOriginal(
-          startsWithMarkerOriginalResult.remainingText
+        currentConflict!.hasBase = true
+        currentConflict!.setTextAfterMarkerBase(
+          startsWithMarkerBaseResult.remainingText
         )
-        state = ParserState.Original
+        state = ParserState.Base
       } else if (startsWithMarkerTheirsResult.success) {
-        if (state !== ParserState.Ours && state !== ParserState.Original) {
+        if (state !== ParserState.Ours && state !== ParserState.Base) {
           throw new Error('Unexpected conflict marker')
         }
 
@@ -87,8 +87,8 @@ export class Parser {
           currentTextLines.push(line)
         } else if (state === ParserState.Ours) {
           currentConflict!.addOurLine(line)
-        } else if (state === ParserState.Original) {
-          currentConflict!.addOriginalLine(line)
+        } else if (state === ParserState.Base) {
+          currentConflict!.addBaseLine(line)
         } else if (state === ParserState.Theirs) {
           currentConflict!.addTheirLine(line)
         } else {
@@ -142,6 +142,6 @@ export class Parser {
 const enum ParserState {
   OutsideConflict,
   Ours,
-  Original,
+  Base,
   Theirs,
 }

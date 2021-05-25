@@ -7,25 +7,25 @@ import { Identifier } from './Identifier'
 
 export class Conflict {
   public uri: Uri | undefined = undefined
-  public hasOriginal: boolean = false
+  public hasBase: boolean = false
 
   private textAfterMarkerOurs: string | undefined = undefined
-  private textAfterMarkerOriginal: string | undefined = undefined
+  private textAfterMarkerBase: string | undefined = undefined
   private textAfterMarkerTheirs: string | undefined = undefined
   private textAfterMarkerEnd: string | undefined = undefined
 
   public range: Range = new Range(new Position(0, 0), new Position(0, 0))
   private ourLines: string[] = []
-  private originalLines: string[] = []
+  private baseLines: string[] = []
   private theirLines: string[] = []
   public ourRange: Range = new Range(new Position(0, 0), new Position(0, 0))
-  public originalRange: Range = new Range(
+  public baseRange: Range = new Range(
     new Position(0, 0),
     new Position(0, 0)
   )
   public theirRange: Range = new Range(new Position(0, 0), new Position(0, 0))
   public ourIdentifers: Identifier[] = []
-  public originalIdentifers: Identifier[] = []
+  public baseIdentifers: Identifier[] = []
   public theirIdentifers: Identifier[] = []
 
   public getSqueezedText(): string {
@@ -90,22 +90,22 @@ export class Conflict {
         this.theirLines.length - bottomCursor
       )
 
-      let originalParts: string[]
+      let baseParts: string[]
 
-      if (this.hasOriginal) {
-        originalParts = [
-          Constants.conflictMarkerOriginal + this.textAfterMarkerOriginal,
-          ...this.originalLines,
+      if (this.hasBase) {
+        baseParts = [
+          Constants.conflictMarkerBase + this.textAfterMarkerBase,
+          ...this.baseLines,
         ]
       } else {
-        originalParts = []
+        baseParts = []
       }
 
       parts = [
         ...identicalTopLines,
         Constants.conflictMarkerOurs + this.textAfterMarkerOurs,
         ...ourNonIdenticalLines,
-        ...originalParts,
+        ...baseParts,
         Constants.conflictMarkerTheirs + this.textAfterMarkerTheirs,
         ...theirNonIdenticalLines,
         Constants.conflictMarkerEnd + this.textAfterMarkerEnd,
@@ -116,8 +116,8 @@ export class Conflict {
     return parts.filter((part) => part.length > 0).join('')
   }
 
-  public addOriginalLine(line: string): void {
-    this.originalLines.push(line)
+  public addBaseLine(line: string): void {
+    this.baseLines.push(line)
   }
 
   public addOurLine(line: string): void {
@@ -132,8 +132,8 @@ export class Conflict {
     this.textAfterMarkerEnd = text
   }
 
-  public setTextAfterMarkerOriginal(text: string): void {
-    this.textAfterMarkerOriginal = text
+  public setTextAfterMarkerBase(text: string): void {
+    this.textAfterMarkerBase = text
   }
 
   public setTextAfterMarkerOurs(text: string): void {
@@ -148,8 +148,8 @@ export class Conflict {
     this.ourIdentifers.push(identifier)
   }
 
-  public addOriginalIdentifier(identifier: Identifier): void {
-    this.originalIdentifers.push(identifier)
+  public addBaseIdentifier(identifier: Identifier): void {
+    this.baseIdentifers.push(identifier)
   }
 
   public addTheirIdentifier(identifier: Identifier): void {
@@ -168,14 +168,14 @@ export class Conflict {
           : 0
       )
     )
-    if (this.hasOriginal) {
-      let orgEndLine = oursEndLine + 1 + this.originalLines.length
-      this.originalRange = new Range(
+    if (this.hasBase) {
+      let orgEndLine = oursEndLine + 1 + this.baseLines.length
+      this.baseRange = new Range(
         new Position(oursEndLine + 2, 0),
         new Position(
           orgEndLine,
-          this.originalLines.length > 0
-            ? this.originalLines[this.originalLines.length - 1].length - 1
+          this.baseLines.length > 0
+            ? this.baseLines[this.baseLines.length - 1].length - 1
             : 0
         )
       )

@@ -2,7 +2,7 @@
 
 export class Constants {
   public static conflictMarkerOurs = '<<<<<<<'
-  public static conflictMarkerOriginal = '|||||||'
+  public static conflictMarkerBase = '|||||||'
   public static conflictMarkerTheirs = '======='
   public static conflictMarkerEnd = '>>>>>>>'
 }

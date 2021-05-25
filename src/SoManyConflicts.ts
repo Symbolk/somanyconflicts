@@ -122,7 +122,7 @@ export class SoManyConflicts {
   ) {
     let locations: Location[] = []
     locations.push(new Location(conflict.uri!, conflict.theirRange.start))
-    locations.push(new Location(conflict.uri!, conflict.originalRange.start))
+    locations.push(new Location(conflict.uri!, conflict.baseRange.start))
 
     commands.executeCommand(
       'editor.action.peekLocations',
@@ -149,13 +149,13 @@ export class SoManyConflicts {
           new Identifier(symbol, refs == undefined ? [] : refs)
         )
       }
-      if (conflict.originalRange.contains(symbol.selectionRange)) {
+      if (conflict.baseRange.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(
           conflict.uri!,
           this.middlePosition(symbol.selectionRange)
         )
         // cache symbols and refs in ConflictSections
-        conflict.addOriginalIdentifier(
+        conflict.addBaseIdentifier(
           new Identifier(symbol, refs == undefined ? [] : refs)
         )
       }
