@@ -3,9 +3,17 @@ import simpleGit, {
   SimpleGit,
   StatusResult,
 } from 'simple-git'
-import { readdir, readdirSync, readFileSync, stat, statSync } from 'fs'
+import {
+  readdir,
+  readdirSync,
+  readFile,
+  readFileSync,
+  stat,
+  statSync,
+} from 'fs'
 import path = require('path')
 import util = require('util')
+import { Constants } from './Constants'
 const readdirPromise = util.promisify(readdir)
 const statPromise = util.promisify(stat)
 
@@ -44,11 +52,17 @@ export class FileUtils {
     } else {
       // case2: a normal folder
       console.log('Working under a normal directory: ' + directory)
-
-      // just return all files' relative paths under the folder or filter conflicting ones first?
+      let conflictingFilePaths: string[] = []
+      // filter conflicting files
       // let filePaths: string[] = await this.listFilePaths(directory)
       let filePaths: string[] = this.listFilePathsSync(directory)
-      return filePaths
+      for (let filePath of filePaths) {
+        let content = this.readFileContent(filePath)
+        if (content.includes(Constants.conflictMarkerOurs)) {
+          conflictingFilePaths.push(filePath)
+        }
+      }
+      return conflictingFilePaths
     }
   }
 
