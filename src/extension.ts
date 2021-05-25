@@ -109,8 +109,6 @@ export function activate(context: vscode.ExtensionContext) {
       let workspace = vscode.workspace.workspaceFolders[0].uri.path
       // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-      message = `Scanning so many conflicts in your workspace...`
-      vscode.window.showInformationMessage(message)
       vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
@@ -139,17 +137,17 @@ export function activate(context: vscode.ExtensionContext) {
             // construct a graph to keep relations of conflicts
             graph = SoManyConflicts.constructGraph(allConflictSections)
             if (graph == undefined) {
-              message = 'Failed to construct graph for the opened workspace.'
+              message = 'Failed to construct the graph for conflicts.'
               vscode.window.showErrorMessage(message)
               return
             }
           }
-
           message =
-            'Found ' + allConflictSections.length + ' conflicts in total.'
+            'Found ' +
+            allConflictSections.length +
+            ' conflicts in total for the current workspace.'
           vscode.window.showInformationMessage(message)
-
-          // progress.report({ increment: 100 })
+          progress.report({ increment: 100 })
         }
       )
     } else {
