@@ -57,10 +57,12 @@ export class ConflictLensProvider implements CodeLensProvider {
   }
 
   public resolveCodeLens(codeLens: CodeLens, token: CancellationToken) {
+    console.log('Resolved codelens')
+
     codeLens.command = {
       title: 'Show Related Conflicts',
       tooltip: 'Relevant conflict blocks suggested by SoManyConflicts',
-      command: 'somanyconflicts.next',
+      command: 'somanyconflicts.test',
       arguments: ['Argument 1', false],
     }
     return codeLens

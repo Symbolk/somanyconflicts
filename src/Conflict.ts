@@ -2,8 +2,9 @@
 
 import { Uri } from 'vscode'
 import { Position, Range } from 'vscode'
+import { ConflictSide } from './ConflictSide'
 import { Constants } from './Constants'
-import { Identifier } from './Identifier'
+import { Symbol } from './Symbol'
 
 export class Conflict {
   public uri: Uri | undefined = undefined
@@ -15,27 +16,29 @@ export class Conflict {
   private textAfterMarkerEnd: string | undefined = undefined
 
   public range: Range = new Range(new Position(0, 0), new Position(0, 0))
-  private ourLines: string[] = []
-  private baseLines: string[] = []
-  private theirLines: string[] = []
-  public ourRange: Range = new Range(new Position(0, 0), new Position(0, 0))
-  public baseRange: Range = new Range(
-    new Position(0, 0),
-    new Position(0, 0)
-  )
-  public theirRange: Range = new Range(new Position(0, 0), new Position(0, 0))
-  public ourIdentifers: Identifier[] = []
-  public baseIdentifers: Identifier[] = []
-  public theirIdentifers: Identifier[] = []
+  private _ours: ConflictSide = new ConflictSide()
+  public get ours(): ConflictSide {
+    return this._ours
+  }
+
+  private _base: ConflictSide = new ConflictSide()
+  public get base(): ConflictSide {
+    return this._base
+  }
+
+  private _theirs: ConflictSide = new ConflictSide()
+  public get theirs(): ConflictSide {
+    return this._theirs
+  }
 
   public getSqueezedText(): string {
     const minNumberOfLines: number = Math.min(
-      this.ourLines.length,
-      this.theirLines.length
+      this._ours.lines.length,
+      this._theirs.lines.length
     )
     const maxNumberOfLines: number = Math.max(
-      this.ourLines.length,
-      this.theirLines.length
+      this._ours.lines.length,
+      this._theirs.lines.length
     )
 
     // Top cursor will contain the number of identical lines from the top.
@@ -44,8 +47,8 @@ export class Conflict {
     let bottomCursor: number = 0
 
     while (topCursor < minNumberOfLines) {
-      const ourLine: string = this.ourLines[topCursor]
-      const theirLine: string = this.theirLines[topCursor]
+      const ourLine: string = this._ours.lines[topCursor]
+      const theirLine: string = this._theirs.lines[topCursor]
 
       if (ourLine === theirLine) {
         topCursor++
@@ -57,9 +60,9 @@ export class Conflict {
     // We need to subtract topCursor, to ensure that topCursor + bottomCursor <= minNumberOfLines
     while (bottomCursor < minNumberOfLines - topCursor) {
       const ourLine: string =
-        this.ourLines[this.ourLines.length - 1 - bottomCursor]
+        this._ours.lines[this._ours.lines.length - 1 - bottomCursor]
       const theirLine: string =
-        this.theirLines[this.theirLines.length - 1 - bottomCursor]
+        this._theirs.lines[this._theirs.lines.length - 1 - bottomCursor]
 
       if (ourLine === theirLine) {
         bottomCursor++
@@ -68,11 +71,11 @@ export class Conflict {
       }
     }
 
-    const identicalTopLines: string[] = this.ourLines.slice(0, topCursor)
+    const identicalTopLines: string[] = this._ours.lines.slice(0, topCursor)
 
-    const identicalBottomLines: string[] = this.ourLines.slice(
-      this.ourLines.length - bottomCursor,
-      this.ourLines.length
+    const identicalBottomLines: string[] = this._ours.lines.slice(
+      this._ours.lines.length - bottomCursor,
+      this._ours.lines.length
     )
 
     let parts: string[]
@@ -80,14 +83,14 @@ export class Conflict {
     if (topCursor + bottomCursor === maxNumberOfLines) {
       parts = [...identicalTopLines, ...identicalBottomLines]
     } else {
-      const ourNonIdenticalLines: string[] = this.ourLines.slice(
+      const ourNonIdenticalLines: string[] = this._ours.lines.slice(
         topCursor,
-        this.ourLines.length - bottomCursor
+        this._ours.lines.length - bottomCursor
       )
 
-      const theirNonIdenticalLines: string[] = this.theirLines.slice(
+      const theirNonIdenticalLines: string[] = this._theirs.lines.slice(
         topCursor,
-        this.theirLines.length - bottomCursor
+        this._theirs.lines.length - bottomCursor
       )
 
       let baseParts: string[]
@@ -95,7 +98,7 @@ export class Conflict {
       if (this.hasBase) {
         baseParts = [
           Constants.conflictMarkerBase + this.textAfterMarkerBase,
-          ...this.baseLines,
+          ...this._base.lines,
         ]
       } else {
         baseParts = []
@@ -117,15 +120,15 @@ export class Conflict {
   }
 
   public addBaseLine(line: string): void {
-    this.baseLines.push(line)
+    this._base.lines.push(line)
   }
 
   public addOurLine(line: string): void {
-    this.ourLines.push(line)
+    this._ours.lines.push(line)
   }
 
   public addTheirLine(line: string): void {
-    this.theirLines.push(line)
+    this._theirs.lines.push(line)
   }
 
   public setTextAfterMarkerEnd(text: string): void {
@@ -144,57 +147,57 @@ export class Conflict {
     this.textAfterMarkerTheirs = text
   }
 
-  public addOurIdentifier(identifier: Identifier): void {
-    this.ourIdentifers.push(identifier)
+  public addOurIdentifier(identifier: Symbol): void {
+    this._ours.symbols.push(identifier)
   }
 
-  public addBaseIdentifier(identifier: Identifier): void {
-    this.baseIdentifers.push(identifier)
+  public addBaseIdentifier(identifier: Symbol): void {
+    this._base.symbols.push(identifier)
   }
 
-  public addTheirIdentifier(identifier: Identifier): void {
-    this.theirIdentifers.push(identifier)
+  public addTheirIdentifier(identifier: Symbol): void {
+    this._theirs.symbols.push(identifier)
   }
 
   public computeRanges(startLine: number, endLine: number) {
     // line numbers start from 0, and do not include conflict markers
-    let oursEndLine = startLine + 1 + this.ourLines.length - 1
-    this.ourRange = new Range(
+    let oursEndLine = startLine + 1 + this._ours.lines.length - 1
+    this._ours.range = new Range(
       new Position(startLine + 1, 0),
       new Position(
         oursEndLine,
-        this.ourLines.length > 0
-          ? this.ourLines[this.ourLines.length - 1].length - 1
+        this._ours.lines.length > 0
+          ? this._ours.lines[this._ours.lines.length - 1].length - 1
           : 0
       )
     )
     if (this.hasBase) {
-      let orgEndLine = oursEndLine + 1 + this.baseLines.length
-      this.baseRange = new Range(
+      let orgEndLine = oursEndLine + 1 + this._base.lines.length
+      this._base.range = new Range(
         new Position(oursEndLine + 2, 0),
         new Position(
           orgEndLine,
-          this.baseLines.length > 0
-            ? this.baseLines[this.baseLines.length - 1].length - 1
+          this._base.lines.length > 0
+            ? this._base.lines[this._base.lines.length - 1].length - 1
             : 0
         )
       )
-      this.theirRange = new Range(
+      this._theirs.range = new Range(
         new Position(orgEndLine + 2, 0),
         new Position(
           endLine - 1,
-          this.theirLines.length > 0
-            ? this.theirLines[this.theirLines.length - 1].length - 1
+          this._theirs.lines.length > 0
+            ? this._theirs.lines[this._theirs.lines.length - 1].length - 1
             : 0
         )
       )
     } else {
-      this.theirRange = new Range(
+      this._theirs.range = new Range(
         new Position(oursEndLine + 2, 0),
         new Position(
           endLine - 1,
-          this.theirLines.length > 0
-            ? this.theirLines[this.theirLines.length - 1].length - 1
+          this._theirs.lines.length > 0
+            ? this._theirs.lines[this._theirs.lines.length - 1].length - 1
             : 0
         )
       )

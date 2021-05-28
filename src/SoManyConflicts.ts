@@ -11,7 +11,7 @@ import {
 import { Parser } from './Parser'
 import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
-import { Identifier } from './Identifier'
+import { Symbol } from './Symbol'
 import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
 import { AlgUtils } from './AlgUtils'
@@ -44,28 +44,35 @@ export class SoManyConflicts {
         )
 
         // extract identifiers in the whole file
-        // P.S. actually the symbol provider is quite unreliable, it often fails to return ALL symbols but only 1-st level
-        // so avoid counting on pure language service
+        /* P.S. actually the symbol provider is quite unreliable
+         * it often fails to return ALL symbols but only 1-st level (for the issues of LS on conflicting files)
+         * so avoid counting on pure language service
+         */
         let symbols = (await commands.executeCommand(
           'vscode.executeDocumentSymbolProvider',
           uri
         )) as DocumentSymbol[]
         for (let conflictSection of conflictSections) {
-          let conflict = (<ConflictSection>conflictSection).conflict
-          // filter symbols involved in each conflict block
+          let conflict: Conflict = (<ConflictSection>conflictSection).conflict
+          // LSP: filter symbols involved in each conflict block
           if (symbols !== undefined) {
             this.filterConflictingSymbols(conflict, symbols)
           }
-          // TODO: extract tokens in case that LS fails to resolve
+          // AST: extract identifiers (def/use) to complement LSP results
+          this.extractConflictingIdentifiers(conflict)
+
           allConflictSections.push(conflictSection)
 
-          console.log(conflictSections)
+          console.log(conflictSection)
         }
       }
     } catch (err) {
       window.showErrorMessage(err.message)
     }
     return allConflictSections
+  }
+  private static extractConflictingIdentifiers(conflict: Conflict) {
+    console.log(conflict.ours)
   }
 
   public static constructGraph(allConflictSections: ISection[]) {
@@ -105,7 +112,7 @@ export class SoManyConflicts {
     allConflictSections: ISection[],
     graph: any
   ) {
-    console.log(graphlib.alg.topsort(graph))
+    // console.log(graphlib.alg.topsort(graph))
   }
 
   public static suggestResolutionStrategy(
@@ -121,13 +128,13 @@ export class SoManyConflicts {
     graph: any
   ) {
     let locations: Location[] = []
-    locations.push(new Location(conflict.uri!, conflict.theirRange.start))
-    locations.push(new Location(conflict.uri!, conflict.baseRange.start))
+    locations.push(new Location(conflict.uri!, conflict.theirs.range.start))
+    locations.push(new Location(conflict.uri!, conflict.base.range.start))
 
     commands.executeCommand(
       'editor.action.peekLocations',
       conflict.uri,
-      conflict.ourRange.start,
+      conflict.ours.range.start,
       locations,
       'peek'
     )
@@ -139,34 +146,34 @@ export class SoManyConflicts {
     symbols: DocumentSymbol[]
   ) {
     for (let symbol of symbols) {
-      if (conflict.ourRange.contains(symbol.selectionRange)) {
+      if (conflict.ours.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(
           conflict.uri!,
           this.middlePosition(symbol.selectionRange)
         )
         // cache symbols and refs in ConflictSections
         conflict.addOurIdentifier(
-          new Identifier(symbol, refs == undefined ? [] : refs)
+          new Symbol(symbol, refs == undefined ? [] : refs)
         )
       }
-      if (conflict.baseRange.contains(symbol.selectionRange)) {
+      if (conflict.base.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(
           conflict.uri!,
           this.middlePosition(symbol.selectionRange)
         )
         // cache symbols and refs in ConflictSections
         conflict.addBaseIdentifier(
-          new Identifier(symbol, refs == undefined ? [] : refs)
+          new Symbol(symbol, refs == undefined ? [] : refs)
         )
       }
-      if (conflict.theirRange.contains(symbol.selectionRange)) {
+      if (conflict.theirs.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(
           conflict.uri!,
           this.middlePosition(symbol.selectionRange)
         )
         // cache symbols and refs in ConflictSections
         conflict.addTheirIdentifier(
-          new Identifier(symbol, refs == undefined ? [] : refs)
+          new Symbol(symbol, refs == undefined ? [] : refs)
         )
       }
       if (symbol.children.length > 0) {
