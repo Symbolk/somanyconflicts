@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.somany', async () => {
       if (!isReady()) {
-        await init()
+        init()
       }
       // if (!isReady()) {
       //   message = 'Something goes wrong.'
@@ -70,7 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!isReady()) {
-          await init()
+          init()
         }
         // locate the focusing conflict and start from it
         SoManyConflicts.suggestNextConflict(
@@ -86,7 +86,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
       if (!isReady()) {
-        await init()
+        init()
       }
       // TODO: record resolution strategy of conflicts
 
@@ -102,7 +102,7 @@ export function activate(context: vscode.ExtensionContext) {
     return allConflictSections.length != 0 && graph && graph !== undefined
   }
 
-  async function init(): Promise<void> {
+  function init(): void {
     let message: string = ''
     // let allConflictSections: ISection[] = []
     if (vscode.workspace.workspaceFolders !== undefined) {
