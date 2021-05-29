@@ -21,8 +21,21 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
+    "viewsContainers": {
+      "activitybar": [{
+        "id": "conflictTreeViewPanel",
+        "title": "So Many Conflicts",
+        "icon": "media/merge.svg"
+      }]
+    },
+    "views": {
+      "conflictTreeViewPanel": [{
+        "id": "conflictTreeView",
+        "name": "Conflicts List",
+        "contextualTitle": "So Many Conflicts"
+      }]
+    },
+    "commands": [{
         "command": "somanyconflicts.somany",
         "title": "So Many Conflicts: Where to start?"
       },

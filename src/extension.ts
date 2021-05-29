@@ -1,3 +1,4 @@
+import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider } from './ConfllictTreeView';
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
@@ -21,11 +22,18 @@ export function activate(context: vscode.ExtensionContext) {
   let allConflictSections: ISection[] = []
   let graph: typeof Graph | undefined = undefined
 
+  addSubcommandOpenFile(context)
+
+  let conflictTreeRoot = [new ConflictTreeItem("Conflicts List", undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded)]
+  conflictTreeRoot[0].children = []
+  const conflictTreeViewProvider = new ConflictTreeViewProvider(conflictTreeRoot)
+  vscode.window.registerTreeDataProvider('conflictTreeView', conflictTreeViewProvider)
+
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.somany', async () => {
       if (!isReady()) {
-        init()
+        await init()
       }
       // if (!isReady()) {
       //   message = 'Something goes wrong.'
@@ -35,6 +43,11 @@ export function activate(context: vscode.ExtensionContext) {
       message = `Finding the starting point to resolve conflicts...`
       vscode.window.showInformationMessage(message)
       SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+
+      conflictSectionsToTreeItem(allConflictSections, []).then(res => {
+        conflictTreeRoot[0].children = res
+        conflictTreeViewProvider.refresh()
+      })
     })
   )
 
@@ -70,7 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!isReady()) {
-          init()
+          await init()
         }
         // locate the focusing conflict and start from it
         SoManyConflicts.suggestNextConflict(
@@ -86,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.resolve', async () => {
       if (!isReady()) {
-        init()
+        await init()
       }
       // TODO: record resolution strategy of conflicts
 
@@ -102,14 +115,14 @@ export function activate(context: vscode.ExtensionContext) {
     return allConflictSections.length != 0 && graph && graph !== undefined
   }
 
-  function init(): void {
+  async function init(): Promise<any> {
     let message: string = ''
     // let allConflictSections: ISection[] = []
     if (vscode.workspace.workspaceFolders !== undefined) {
       let workspace = vscode.workspace.workspaceFolders[0].uri.path
       // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
 
-      vscode.window.withProgress(
+      return vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: 'Scanning so many conflicts in your workspace...',
@@ -160,4 +173,20 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
+
+
+function addSubcommandOpenFile(context: vscode.ExtensionContext) {
+  const commandsToOpenFiles = 'somanyconflicts.openFileAt'
+  const openFileHandler = async function (uri: vscode.Uri, range: vscode.Range) {
+    await vscode.commands.executeCommand('vscode.open', uri)
+      .then(x => {
+        let activeEditor = vscode.window.activeTextEditor
+        if (activeEditor) {
+          activeEditor.revealRange(range)
+          activeEditor.selection = new vscode.Selection(range.start, range.start)
+        }
+      })
+  }
+  context.subscriptions.push(vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler))
+}
