@@ -210,6 +210,7 @@ export class SoManyConflicts {
     }
 
     if (!conflicts) {
+      conflicts = []
       const sections: ISection[] = Parser.parse(
         editor.document.uri,
         editor.document.getText()
