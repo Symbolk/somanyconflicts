@@ -2860,6 +2860,13 @@ tree-sitter-javascript@^0.19.0:
   dependencies:
     nan "^2.12.1"
 
+tree-sitter-typescript@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.nlark.com/tree-sitter-typescript/download/tree-sitter-typescript-0.19.0.tgz#8dd30d90a6bed5a0c89c7395edc2c3c0dbd7b038"
+  integrity sha1-jdMNkKa+1aDInHOV7cLDwNvXsDg=
+  dependencies:
+    nan "^2.14.0"
+
 tree-sitter@^0.19.0:
   version "0.19.0"
   resolved "https://registry.nlark.com/tree-sitter/download/tree-sitter-0.19.0.tgz#68c4cfa12b34752d69162b81ad233f3e6fc4a70d"

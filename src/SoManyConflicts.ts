@@ -16,12 +16,13 @@ import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
 import { AlgUtils } from './AlgUtils'
 const graphlib = require('@dagrejs/graphlib')
-// const TreeSitter = require('./build/Release/tree_sitter_runtime_binding');
 import * as TreeSitter from 'tree-sitter'
-// import { Point, SyntaxNode, Tree } from 'tree-sitter'
-const JavaScript = require('tree-sitter-javascript')
+import { Identifier } from './Identifier'
+// import { Point, SyntaxNode, Tree, Query, QueryMatch, QueryCapture } from 'tree-sitter'
+// const JavaScript = require('tree-sitter-javascript')
+const TypeScript = require('tree-sitter-typescript').typescript
 const treeSitter = new TreeSitter()
-treeSitter.setLanguage(JavaScript)
+treeSitter.setLanguage(TypeScript)
 
 export class SoManyConflicts {
   public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
@@ -78,18 +79,46 @@ export class SoManyConflicts {
     return allConflictSections
   }
   private static extractConflictingIdentifiers(conflict: Conflict) {
-    const sourceLines = conflict.ours.lines
-    const sourceCode = sourceLines.join('\n')
-    const tree = treeSitter.parse(sourceCode)
-    // const tree = treeSitter.parse((index: number, position: Point) => {
-    //   let line = sourceLines[position.row]
-    //   if (line) {
-    //     return line.slice(position.column)
-    //   } else {
-    //     return ''
+    conflict.base.identifiers = this.analyzeCode(conflict.base.lines)
+    conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines)
+    conflict.theirs.identifiers = this.analyzeCode(conflict.theirs.lines)
+  }
+
+  private static analyzeCode(codeLines: string[]): Identifier[] {
+    // const tree: TreeSitter.Tree = treeSitter.parse(
+    //   (index: number, position: TreeSitter.Point) => {
+    //     let line = codeLines[position.row]
+    //     if (line) {
+    //       return line.slice(position.column)
+    //     } else {
+    //       return ''
+    //     }
     //   }
-    // })
-    console.log(tree.rootNode.toString())
+    // )
+    const tree: TreeSitter.Tree = treeSitter.parse(codeLines.join('\n'))
+    // console.log(tree.rootNode.toString())
+
+    const query = new TreeSitter.Query(
+      TypeScript,
+      `
+    (function_declaration name: (identifier) @fn-def)
+    (call_expression function: (identifier) @fn-ref)
+    `
+    )
+
+    let identifiers: Identifier[] = []
+    const matches: TreeSitter.QueryMatch[] = query.matches(tree.rootNode)
+    for (let match of matches) {
+      const captures: TreeSitter.QueryCapture[] = match.captures
+      for (let capture of captures) {
+        if (capture.node !== undefined) {
+          if (capture.node.text !== undefined) {
+            identifiers.push(new Identifier(capture.name, capture.node.text))
+          }
+        }
+      }
+    }
+    return identifiers
   }
 
   public static constructGraph(allConflictSections: ISection[]) {

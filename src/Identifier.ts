@@ -1,12 +1,14 @@
 export class Identifier {
-  private _identifier: string
-  private _isDef: boolean
+  private _isDef: boolean = false
 
-  public constructor() {
-    this._identifier = ''
-    this._isDef = false
+  public constructor(private _type: string, private _identifier: string) {}
+
+  public get type(): string {
+    return this._type
   }
-
+  public set type(value: string) {
+    this._type = value
+  }
   public get identifier(): string {
     return this._identifier
   }
