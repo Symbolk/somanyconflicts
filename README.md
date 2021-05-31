@@ -32,6 +32,34 @@
 
 ## Known Issues
 
+- If you find that electron takes too much time to install when running `yarn`, stop it with `Command+C` and remove `"electron": "12.0.4"` from `package.json` first, then run the following command to install modules:
+```sh
+yarn
+ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.0.4
+```
+
+- Treesitter is a native module that must be rebuilt locally after installed to match the electron node version of VSCode (see [electron-rebuild]). However, directly running rebuild will result in an error about C++ version. There is an unmerged [PR] and a related [issue] for [node-tree-sitter], for now you need to follow these steps to successfully rebuild it:
+
+[electron-rebuild]: https://www.electronjs.org/docs/tutorial/using-native-node-modules
+[node-tree-sitter]: https://github.com/tree-sitter/node-tree-sitter/
+[PR]: https://github.com/tree-sitter/node-tree-sitter/pull/83
+[issue]: https://github.com/tree-sitter/node-tree-sitter/issues/82
+
+1. Edit `node_modules/tree-sitter/binding.gyp`:
+
+```
+      'xcode_settings': {
+-       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
++       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+      },
+```
+
+2. Rebuild it with:
+
+```
+./node_modules/.bin/electron-rebuild
+```
+   
 <center> <strong>Enjoy!</strong> </center>
 
 
