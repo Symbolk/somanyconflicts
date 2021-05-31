@@ -15,7 +15,13 @@ import { Symbol } from './Symbol'
 import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
 import { AlgUtils } from './AlgUtils'
-var graphlib = require('@dagrejs/graphlib')
+const graphlib = require('@dagrejs/graphlib')
+// const TreeSitter = require('./build/Release/tree_sitter_runtime_binding');
+import * as TreeSitter from 'tree-sitter'
+// import { Point, SyntaxNode, Tree } from 'tree-sitter'
+const JavaScript = require('tree-sitter-javascript')
+const treeSitter = new TreeSitter()
+treeSitter.setLanguage(JavaScript)
 
 export class SoManyConflicts {
   public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
@@ -72,7 +78,18 @@ export class SoManyConflicts {
     return allConflictSections
   }
   private static extractConflictingIdentifiers(conflict: Conflict) {
-    console.log(conflict.ours)
+    const sourceLines = conflict.ours.lines
+    const sourceCode = sourceLines.join('\n')
+    const tree = treeSitter.parse(sourceCode)
+    // const tree = treeSitter.parse((index: number, position: Point) => {
+    //   let line = sourceLines[position.row]
+    //   if (line) {
+    //     return line.slice(position.column)
+    //   } else {
+    //     return ''
+    //   }
+    // })
+    console.log(tree.rootNode.toString())
   }
 
   public static constructGraph(allConflictSections: ISection[]) {

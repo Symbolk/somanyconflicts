@@ -22,20 +22,25 @@
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
-      "activitybar": [{
-        "id": "conflictTreeViewPanel",
-        "title": "So Many Conflicts",
-        "icon": "media/merge.svg"
-      }]
+      "activitybar": [
+        {
+          "id": "conflictTreeViewPanel",
+          "title": "So Many Conflicts",
+          "icon": "media/merge.svg"
+        }
+      ]
     },
     "views": {
-      "conflictTreeViewPanel": [{
-        "id": "conflictTreeView",
-        "name": "Conflicts List",
-        "contextualTitle": "So Many Conflicts"
-      }]
+      "conflictTreeViewPanel": [
+        {
+          "id": "conflictTreeView",
+          "name": "Conflicts List",
+          "contextualTitle": "So Many Conflicts"
+        }
+      ]
     },
-    "commands": [{
+    "commands": [
+      {
         "command": "somanyconflicts.somany",
         "title": "So Many Conflicts: Where to start?"
       },
@@ -64,6 +69,8 @@
     "@types/vscode": "^1.56.0",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
+    "electron": "12.0.4",
+    "electron-rebuild": "^2.3.5",
     "eslint": "^7.19.0",
     "glob": "^7.1.6",
     "mocha": "^8.2.1",
@@ -72,6 +79,8 @@
   },
   "dependencies": {
     "@dagrejs/graphlib": "^2.1.4",
-    "simple-git": "^2.39.0"
+    "simple-git": "^2.39.0",
+    "tree-sitter": "^0.19.0",
+    "tree-sitter-javascript": "^0.19.0"
   }
 }
