@@ -10,6 +10,13 @@
 - Interactively choose the next (*related*/*similar*) conflict to resolve more easily.
 - Suggest resolution strategy given already resolved relevant conflicts (recently by the same developer and previously by all team members).
 
+## Language Support
+
+- JavaScript
+- TypeScript
+- Java
+- Python
+
 ## Requirements
 
 - Install latest VSCode of course.
@@ -59,7 +66,9 @@ ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.
 ```
 ./node_modules/.bin/electron-rebuild
 ```
-   
+
+> Note that, unfortunately, each time you run yarn, you need to rebuild treesitter as above :-(
+> 
 <center> <strong>Enjoy!</strong> </center>
 
 
