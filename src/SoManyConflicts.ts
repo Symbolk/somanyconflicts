@@ -18,6 +18,7 @@ import { AlgUtils } from './AlgUtils'
 const graphlib = require('@dagrejs/graphlib')
 import * as TreeSitter from 'tree-sitter'
 import { Identifier } from './Identifier'
+import { Constants } from './Constants'
 // import { Point, SyntaxNode, Tree, Query, QueryMatch, QueryCapture } from 'tree-sitter'
 // const JavaScript = require('tree-sitter-javascript')
 const TypeScript = require('tree-sitter-typescript').typescript
@@ -98,13 +99,7 @@ export class SoManyConflicts {
     const tree: TreeSitter.Tree = treeSitter.parse(codeLines.join('\n'))
     // console.log(tree.rootNode.toString())
 
-    const query = new TreeSitter.Query(
-      TypeScript,
-      `
-    (function_declaration name: (identifier) @fn-def)
-    (call_expression function: (identifier) @fn-ref)
-    `
-    )
+    const query = new TreeSitter.Query(TypeScript, Constants.typeScriptQuery)
 
     let identifiers: Identifier[] = []
     const matches: TreeSitter.QueryMatch[] = query.matches(tree.rootNode)
