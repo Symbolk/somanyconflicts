@@ -26,7 +26,7 @@
         {
           "id": "conflictTreeViewPanel",
           "title": "So Many Conflicts",
-          "icon": "media/merge.svg"
+          "icon": "media/merge.png"
         }
       ]
     },
@@ -34,9 +34,9 @@
       "conflictTreeViewPanel": [
         {
           "id": "conflictTreeView",
-          "name": "Conflicts List",
+          "name": "Merge Conflicts List",
           "contextualTitle": "So Many Conflicts",
-          "icon": "media/merge.svg"
+          "icon": "media/merge.png"
         }
       ]
     },

@@ -1,4 +1,8 @@
-import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider } from './ConflictTreeView';
+import {
+  conflictSectionsToTreeItem,
+  ConflictTreeItem,
+  ConflictTreeViewProvider,
+} from './ConflictTreeView'
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
@@ -24,10 +28,23 @@ export function activate(context: vscode.ExtensionContext) {
 
   addSubcommandOpenFile(context)
 
-  let conflictTreeRoot = [new ConflictTreeItem("Conflicts List", undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded)]
+  let conflictTreeRoot = [
+    new ConflictTreeItem(
+      'Merge Conflicts List',
+      undefined,
+      undefined,
+      [],
+      vscode.TreeItemCollapsibleState.Expanded
+    ),
+  ]
   conflictTreeRoot[0].children = []
-  const conflictTreeViewProvider = new ConflictTreeViewProvider(conflictTreeRoot)
-  vscode.window.registerTreeDataProvider('conflictTreeView', conflictTreeViewProvider)
+  const conflictTreeViewProvider = new ConflictTreeViewProvider(
+    conflictTreeRoot
+  )
+  vscode.window.registerTreeDataProvider(
+    'conflictTreeView',
+    conflictTreeViewProvider
+  )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
@@ -35,18 +52,17 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await init()
       }
-      // if (!isReady()) {
-      //   message = 'Something goes wrong.'
-      //   vscode.window.showWarningMessage(message)
-      //   return
-      // }
       message = `Finding the starting point to resolve conflicts...`
       vscode.window.showInformationMessage(message)
-      SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+      let suggestions: ISection[] = SoManyConflicts.suggestStartingPoint(
+        allConflictSections,
+        graph
+      )
 
-      conflictSectionsToTreeItem(allConflictSections, []).then(res => {
+      conflictSectionsToTreeItem(suggestions, []).then((res) => {
         conflictTreeRoot[0].children = res
         conflictTreeViewProvider.refresh()
+        vscode.commands.executeCommand('conflictTreeView.focus')
       })
     })
   )
@@ -173,20 +189,23 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() { }
-
+export function deactivate() {}
 
 function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   const commandsToOpenFiles = 'somanyconflicts.openFileAt'
-  const openFileHandler = async function (uri: vscode.Uri, range: vscode.Range) {
-    await vscode.commands.executeCommand('vscode.open', uri)
-      .then(x => {
-        let activeEditor = vscode.window.activeTextEditor
-        if (activeEditor) {
-          activeEditor.revealRange(range)
-          activeEditor.selection = new vscode.Selection(range.start, range.start)
-        }
-      })
+  const openFileHandler = async function (
+    uri: vscode.Uri,
+    range: vscode.Range
+  ) {
+    await vscode.commands.executeCommand('vscode.open', uri).then((x) => {
+      let activeEditor = vscode.window.activeTextEditor
+      if (activeEditor) {
+        activeEditor.revealRange(range)
+        activeEditor.selection = new vscode.Selection(range.start, range.start)
+      }
+    })
   }
-  context.subscriptions.push(vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler))
+  context.subscriptions.push(
+    vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler)
+  )
 }

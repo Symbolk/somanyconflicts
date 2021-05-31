@@ -124,12 +124,12 @@ export class SoManyConflicts {
       j: number = 0
 
     // construct graph nodes
-    for (i = 0; i < allConflictSections.length - 1; ++i) {
-      graph.setNode(i.toString())
+    for (i = 0; i < allConflictSections.length; ++i) {
+      graph.setNode(i, { label: i })
     }
 
     // construct graph edges
-    for (i = 0; i < allConflictSections.length - 1; ++i) {
+    for (i = 0; i < allConflictSections.length; ++i) {
       let conflict1: Conflict = (<ConflictSection>allConflictSections[i])
         .conflict
       for (j = i + 1; j < allConflictSections.length; ++j) {
@@ -139,9 +139,9 @@ export class SoManyConflicts {
         if (weight > 0) {
           let lastWeight = graph.edge()
           if (lastWeight == undefined) {
-            graph.setEdge(i.toString, j.toString, weight)
+            graph.setEdge(i, j, weight)
           } else {
-            graph.setEdge(i.toString, j.toString, lastWeight + weight)
+            graph.setEdge(i, j, lastWeight + weight)
           }
         }
       }
@@ -152,8 +152,20 @@ export class SoManyConflicts {
   public static suggestStartingPoint(
     allConflictSections: ISection[],
     graph: any
-  ) {
-    // console.log(graphlib.alg.topsort(graph))
+  ): ISection[] {
+    let suggestion: ISection[] = []
+    let components = graphlib.alg.components(graph)
+    components.sort(function (a: [], b: []) {
+      // ASC  -> a.length - b.length
+      // DESC -> b.length - a.length
+      return b.length - a.length
+    })
+    for (let component of components) {
+      if (component.length > 0) {
+        suggestion.push(allConflictSections[component[0]])
+      }
+    }
+    return suggestion
   }
 
   public static suggestResolutionStrategy(

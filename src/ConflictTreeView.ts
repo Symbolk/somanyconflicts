@@ -4,7 +4,7 @@ import * as vscode from 'vscode'
 
 export class ConflictTreeViewProvider implements vscode.TreeDataProvider<ConflictTreeItem>{
     constructor(private conflict: ConflictTreeItem[]) {
-        console.log("conflict", conflict)
+        // console.log("conflict", conflict)
     }
     getTreeItem(item: ConflictTreeItem): vscode.TreeItem {
         if (item.uri && item.range && item.label) {
@@ -61,8 +61,8 @@ export async function conflictSectionsToTreeItem(allConflictSections: ISection[]
         if (section instanceof ConflictSection) {
             let doc = await vscode.workspace.openTextDocument(section.conflict.uri!)
             let conflict = (<ConflictSection>section).conflict
-            let starx = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
-            let range = new vscode.Range(starx, conflict.range.end)
+            let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
+            let range = new vscode.Range(start, conflict.range.end)
             let label = doc.getText(range).trimLeft()
             let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [],
                 vscode.TreeItemCollapsibleState.None)
