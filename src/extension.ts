@@ -2,6 +2,7 @@ import {
   conflictSectionsToTreeItem,
   ConflictTreeItem,
   ConflictTreeViewProvider,
+  suggestionsToTreeItem,
 } from './ConflictTreeView'
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -28,8 +29,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   addSubcommandOpenFile(context)
 
-  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView')
-  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView')
+  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] =
+    createTree('suggestedConflictTreeView')
+  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree(
+    'allConflictTreeView'
+  )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
@@ -39,18 +43,21 @@ export function activate(context: vscode.ExtensionContext) {
       }
       message = `Finding the starting point to resolve conflicts...`
       vscode.window.showInformationMessage(message)
-      let suggestions: ISection[] = SoManyConflicts.suggestStartingPoint(
-        allConflictSections,
-        graph
-      )
+      let groupedConflictSections: ISection[][] =
+        SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
 
-      conflictSectionsToTreeItem(suggestions, suggestedConflictTreeRoot).then((res) => {
+      suggestionsToTreeItem(
+        groupedConflictSections,
+        suggestedConflictTreeRoot
+      ).then((res) => {
         suggestedConflictTreeViewProvider.refresh()
         vscode.commands.executeCommand('suggestedConflictTreeView.focus')
       })
-      conflictSectionsToTreeItem(suggestions, allConflictTreeRoot).then((res) => {
-        allConflictTreeViewProvider.refresh()
-      })
+      conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then(
+        (res) => {
+          allConflictTreeViewProvider.refresh()
+        }
+      )
     })
   )
 
@@ -197,14 +204,11 @@ function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   )
 }
 
-function createTree(viewName: string): [ConflictTreeItem[], ConflictTreeViewProvider] {
+function createTree(
+  viewName: string
+): [ConflictTreeItem[], ConflictTreeViewProvider] {
   let treeRoot: ConflictTreeItem[] = []
-  const treeViewProvider = new ConflictTreeViewProvider(
-    treeRoot
-  )
-  vscode.window.registerTreeDataProvider(
-    viewName,
-    treeViewProvider
-  )
+  const treeViewProvider = new ConflictTreeViewProvider(treeRoot)
+  vscode.window.registerTreeDataProvider(viewName, treeViewProvider)
   return [treeRoot, treeViewProvider]
 }

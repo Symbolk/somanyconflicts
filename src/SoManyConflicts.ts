@@ -152,8 +152,8 @@ export class SoManyConflicts {
   public static suggestStartingPoint(
     allConflictSections: ISection[],
     graph: any
-  ): ISection[] {
-    let suggestion: ISection[] = []
+  ): ISection[][] {
+    let groupedConflictSections: ISection[][] = []
     let components = graphlib.alg.components(graph)
     components.sort(function (a: [], b: []) {
       // ASC  -> a.length - b.length
@@ -162,10 +162,15 @@ export class SoManyConflicts {
     })
     for (let component of components) {
       if (component.length > 0) {
-        suggestion.push(allConflictSections[component[0]])
+        let sections: ISection[] = []
+        for (let element of component) {
+          let index: number = +element
+          sections.push(allConflictSections[index])
+        }
+        groupedConflictSections.push(sections)
       }
     }
-    return suggestion
+    return groupedConflictSections
   }
 
   public static suggestResolutionStrategy(
