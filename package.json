@@ -17,7 +17,7 @@
   "activationEvents": [
     "onCommand:somanyconflicts.somany",
     "onCommand:somanyconflicts.next",
-    "onCommand:somanyconflicts.resolve"
+    "onCommand:somanyconflicts.how"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -56,7 +56,7 @@
         "title": "So Many Conflicts: What's next?"
       },
       {
-        "command": "somanyconflicts.resolve",
+        "command": "somanyconflicts.how",
         "title": "So Many Conflicts: How to resolve?"
       }
     ]

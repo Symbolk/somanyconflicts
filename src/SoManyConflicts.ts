@@ -26,9 +26,11 @@ const treeSitter = new TreeSitter()
 treeSitter.setLanguage(TypeScript)
 
 export class SoManyConflicts {
-  public static async scanAllConflicts(workspace: string): Promise<ISection[]> {
+  public static async scanAllConflicts(
+    workspace: string
+  ): Promise<Map<Uri, ISection[]>> {
     let message: string = ''
-    let allConflictSections: ISection[] = []
+    let conflictSectionsByFile = new Map<Uri, ISection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
@@ -38,7 +40,7 @@ export class SoManyConflicts {
       if (filePaths.length == 0) {
         message = 'Found no conflicting files in the workspace!'
         window.showWarningMessage(message)
-        return allConflictSections
+        return conflictSectionsByFile
       }
       for (const absPath of filePaths) {
         console.log('Start parsing ' + absPath)
@@ -69,16 +71,17 @@ export class SoManyConflicts {
           // AST: extract identifiers (def/use) to complement LSP results
           this.extractConflictingIdentifiers(conflict)
 
-          allConflictSections.push(conflictSection)
-
           console.log(conflictSection)
         }
+        conflictSectionsByFile.set(uri, conflictSections)
       }
     } catch (err) {
       window.showErrorMessage(err.message)
+      return conflictSectionsByFile
     }
-    return allConflictSections
+    return conflictSectionsByFile
   }
+
   private static extractConflictingIdentifiers(conflict: Conflict) {
     conflict.base.identifiers = this.analyzeCode(conflict.base.lines)
     conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines)
@@ -175,16 +178,21 @@ export class SoManyConflicts {
 
   public static suggestResolutionStrategy(
     allConflictSections: ISection[],
+    conflictIndex: number,
     graph: any
   ) {
     console.log('No suggestion.')
   }
 
-  public static suggestNextConflict(
+  public static suggestRelatedConflicts(
     allConflictSections: ISection[],
-    conflict: Conflict,
+    conflictIndex: number,
     graph: any
   ) {
+    graph.nodeEdges()
+    let conflict: Conflict = (<ConflictSection>(
+      allConflictSections[conflictIndex]
+    )).conflict
     let locations: Location[] = []
     locations.push(new Location(conflict.uri!, conflict.theirs.range.start))
     locations.push(new Location(conflict.uri!, conflict.base.range.start))
@@ -257,39 +265,5 @@ export class SoManyConflicts {
       position
     )
     return refs
-  }
-
-  public static findConflictContainingSelection(
-    editor: TextEditor | undefined,
-    conflicts?: Conflict[]
-  ): Conflict | null {
-    if (!editor) {
-      return null
-    }
-
-    if (!conflicts) {
-      conflicts = []
-      const sections: ISection[] = Parser.parse(
-        editor.document.uri,
-        editor.document.getText()
-      )
-      for (let section of sections) {
-        if (section instanceof ConflictSection) {
-          conflicts!.push((<ConflictSection>section).conflict)
-        }
-      }
-    }
-
-    if (!conflicts || conflicts.length === 0) {
-      return null
-    }
-
-    for (const conflict of conflicts) {
-      if (conflict.range.contains(editor.selection.active)) {
-        return conflict
-      }
-    }
-
-    return null
   }
 }
