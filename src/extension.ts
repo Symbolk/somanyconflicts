@@ -200,7 +200,7 @@ function addSubcommandOpenFile(context: vscode.ExtensionContext) {
     await vscode.commands.executeCommand('vscode.open', uri).then((x) => {
       let activeEditor = vscode.window.activeTextEditor
       if (activeEditor) {
-        activeEditor.revealRange(range)
+        activeEditor.revealRange(range, vscode.TextEditorRevealType.InCenter)
         activeEditor.selection = new vscode.Selection(range.start, range.start)
       }
     })
