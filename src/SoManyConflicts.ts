@@ -189,22 +189,43 @@ export class SoManyConflicts {
     conflictIndex: number,
     graph: any
   ) {
-    graph.nodeEdges()
-    let conflict: Conflict = (<ConflictSection>(
-      allConflictSections[conflictIndex]
-    )).conflict
+    let focusedConflict: Conflict = this.getConflictByIndex(
+      allConflictSections,
+      conflictIndex
+    )
     let locations: Location[] = []
-    locations.push(new Location(conflict.uri!, conflict.theirs.range.start))
-    locations.push(new Location(conflict.uri!, conflict.base.range.start))
+    let edges = graph.nodeEdges(conflictIndex)
+    if (edges) {
+      for (let edge of edges) {
+        if (!isNaN(+edge.v)) {
+          if (+edge.v != conflictIndex) {
+            let conflict = this.getConflictByIndex(allConflictSections, +edge.v)
+            locations.push(new Location(conflict.uri!, conflict.range.start))
+          }
+        }
+        if (!isNaN(+edge.w)) {
+          if (+edge.w != conflictIndex) {
+            let conflict = this.getConflictByIndex(allConflictSections, +edge.w)
+            locations.push(new Location(conflict.uri!, conflict.range.start))
+          }
+        }
+      }
+    }
 
     commands.executeCommand(
       'editor.action.peekLocations',
-      conflict.uri,
-      conflict.ours.range.start,
+      focusedConflict.uri,
+      focusedConflict.ours.range.start,
       locations,
       'peek'
     )
-    console.log(conflict)
+  }
+
+  private static getConflictByIndex(
+    allConflictSections: ISection[],
+    index: number
+  ): Conflict {
+    return (<ConflictSection>allConflictSections[index]).conflict
   }
 
   private static async filterConflictingSymbols(
