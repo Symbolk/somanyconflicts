@@ -33,14 +33,8 @@
     "views": {
       "conflictTreeViewPanel": [
         {
-          "id": "allConflictTreeView",
-          "name": "Merge Conflicts",
-          "contextualTitle": "So Many Conflicts",
-          "icon": "media/merge.png"
-        },
-        {
-          "id": "suggestedConflictTreeView",
-          "name": "Suggested Conflicts to Resolve",
+          "id": "conflictTreeView",
+          "name": "Merge Conflicts List",
           "contextualTitle": "So Many Conflicts",
           "icon": "media/merge.png"
         }

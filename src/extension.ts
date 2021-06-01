@@ -28,8 +28,23 @@ export function activate(context: vscode.ExtensionContext) {
 
   addSubcommandOpenFile(context)
 
-  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView')
-  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView')
+  let conflictTreeRoot = [
+    new ConflictTreeItem(
+      'Merge Conflicts List',
+      undefined,
+      undefined,
+      [],
+      vscode.TreeItemCollapsibleState.Expanded
+    ),
+  ]
+  conflictTreeRoot[0].children = []
+  const conflictTreeViewProvider = new ConflictTreeViewProvider(
+    conflictTreeRoot
+  )
+  vscode.window.registerTreeDataProvider(
+    'conflictTreeView',
+    conflictTreeViewProvider
+  )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
@@ -44,12 +59,10 @@ export function activate(context: vscode.ExtensionContext) {
         graph
       )
 
-      conflictSectionsToTreeItem(suggestions, suggestedConflictTreeRoot).then((res) => {
-        suggestedConflictTreeViewProvider.refresh()
-        vscode.commands.executeCommand('suggestedConflictTreeView.focus')
-      })
-      conflictSectionsToTreeItem(suggestions, allConflictTreeRoot).then((res) => {
-        allConflictTreeViewProvider.refresh()
+      conflictSectionsToTreeItem(suggestions, []).then((res) => {
+        conflictTreeRoot[0].children = res
+        conflictTreeViewProvider.refresh()
+        vscode.commands.executeCommand('conflictTreeView.focus')
       })
     })
   )
@@ -195,16 +208,4 @@ function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler)
   )
-}
-
-function createTree(viewName: string): [ConflictTreeItem[], ConflictTreeViewProvider] {
-  let treeRoot: ConflictTreeItem[] = []
-  const treeViewProvider = new ConflictTreeViewProvider(
-    treeRoot
-  )
-  vscode.window.registerTreeDataProvider(
-    viewName,
-    treeViewProvider
-  )
-  return [treeRoot, treeViewProvider]
 }
