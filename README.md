@@ -36,6 +36,17 @@
 2. Run `yarn` to download dependencies.
 3. Press `F5` to run and debug extension.
 4. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
+5. Trick: When debugging, install the extension `Auto Run Command` and configure it in `Code-Preferences-Settings`, you can avoid manually invoke the command:
+
+```json
+  "auto-run-command.rules": [
+    {
+      "condition": "isRootFolder: XXX",
+      "command": "somanyconflicts.somany",
+      "message": "Running So Many Conflicts"
+    }
+  ],
+```
 
 ## Known Issues
 
@@ -54,7 +65,7 @@ ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.
 
 1. Edit `node_modules/tree-sitter/binding.gyp`:
 
-```
+```json
       'xcode_settings': {
 -       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
 +       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
@@ -63,14 +74,13 @@ ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.
 
 2. Rebuild it with:
 
-```
+```sh
 ./node_modules/.bin/electron-rebuild
 ```
 
 > Note that, unfortunately, each time you run yarn, you need to rebuild treesitter as above :-(
 > 
 <center> <strong>Enjoy!</strong> </center>
-
 
 > Conflicts parsing part is borrowed from [Conflict Squeezer], thanks for the nice work!
 
