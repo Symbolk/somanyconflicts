@@ -41,21 +41,33 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await init()
       }
-      message = `Finding the starting point to resolve conflicts...`
-      vscode.window.showInformationMessage(message)
-      let groupedConflictSections: ISection[][] =
-        SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+      vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: 'Finding the starting point to resolve conflicts...',
+          cancellable: true,
+        },
+        async (progress, token) => {
+          token.onCancellationRequested(() => {
+            console.log('User canceled the scanning.')
+          })
 
-      suggestionsToTreeItem(
-        groupedConflictSections,
-        suggestedConflictTreeRoot
-      ).then((res) => {
-        suggestedConflictTreeViewProvider.refresh()
-        vscode.commands.executeCommand('suggestedConflictTreeView.focus')
-      })
-      conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then(
-        (res) => {
-          allConflictTreeViewProvider.refresh()
+          let groupedConflictSections: ISection[][] =
+            SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+          suggestionsToTreeItem(
+            groupedConflictSections,
+            suggestedConflictTreeRoot
+          ).then((res) => {
+            suggestedConflictTreeViewProvider.refresh()
+            vscode.commands.executeCommand('suggestedConflictTreeView.focus')
+          })
+          conflictSectionsToTreeItem(
+            allConflictSections,
+            allConflictTreeRoot
+          ).then((res) => {
+            allConflictTreeViewProvider.refresh()
+          })
+          progress.report({ increment: 100 })
         }
       )
     })
@@ -168,7 +180,7 @@ export function activate(context: vscode.ExtensionContext) {
           message =
             'Found ' +
             allConflictSections.length +
-            ' conflicts in total for the current workspace.'
+            ' conflicts in total in the current workspace.'
           vscode.window.showInformationMessage(message)
           progress.report({ increment: 100 })
         }

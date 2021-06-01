@@ -180,7 +180,7 @@ export class SoManyConflicts {
     console.log('No suggestion.')
   }
 
-  static suggestNextConflict(
+  public static suggestNextConflict(
     allConflictSections: ISection[],
     conflict: Conflict,
     graph: any
