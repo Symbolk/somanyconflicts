@@ -200,25 +200,29 @@ export class SoManyConflicts {
         if (!isNaN(+edge.v)) {
           if (+edge.v != conflictIndex) {
             let conflict = this.getConflictByIndex(allConflictSections, +edge.v)
-            locations.push(new Location(conflict.uri!, conflict.range.start))
+            locations.push(new Location(conflict.uri!, conflict.base.range))
           }
         }
         if (!isNaN(+edge.w)) {
           if (+edge.w != conflictIndex) {
             let conflict = this.getConflictByIndex(allConflictSections, +edge.w)
-            locations.push(new Location(conflict.uri!, conflict.range.start))
+            locations.push(new Location(conflict.uri!, conflict.base.range))
           }
         }
       }
     }
 
-    commands.executeCommand(
-      'editor.action.peekLocations',
-      focusedConflict.uri,
-      focusedConflict.ours.range.start,
-      locations,
-      'peek'
-    )
+    if (edges.length == 0 || locations.length == 0) {
+      window.showWarningMessage('Found no related conflicts for this conflict.')
+    } else {
+      commands.executeCommand(
+        'editor.action.peekLocations',
+        focusedConflict.uri,
+        focusedConflict.ours.range.start,
+        locations,
+        'peek'
+      )
+    }
   }
 
   private static getConflictByIndex(
