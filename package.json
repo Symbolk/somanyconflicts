@@ -15,7 +15,8 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:somanyconflicts.somany",
+    "onCommand:somanyconflicts.scan",
+    "onCommand:somanyconflicts.start",
     "onCommand:somanyconflicts.next",
     "onCommand:somanyconflicts.how"
   ],
@@ -48,16 +49,20 @@
     },
     "commands": [
       {
-        "command": "somanyconflicts.somany",
-        "title": "So Many Conflicts: Where to start?"
+        "command": "somanyconflicts.scan",
+        "title": "So Many Conflicts: Show All Merge Conflicts"
+      },
+      {
+        "command": "somanyconflicts.start",
+        "title": "So Many Conflicts: Where to Start Resolving?"
       },
       {
         "command": "somanyconflicts.next",
-        "title": "So Many Conflicts: What's next?"
+        "title": "So Many Conflicts: What's Related Conflicts?"
       },
       {
         "command": "somanyconflicts.how",
-        "title": "So Many Conflicts: How to resolve?"
+        "title": "So Many Conflicts: How to Resolve this Conflict?"
       }
     ]
   },

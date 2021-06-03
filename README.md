@@ -42,7 +42,7 @@
   "auto-run-command.rules": [
     {
       "condition": "isRootFolder: XXX",
-      "command": "somanyconflicts.somany",
+      "command": "somanyconflicts.start",
       "message": "Running So Many Conflicts"
     }
   ],

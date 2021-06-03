@@ -39,9 +39,29 @@ export function activate(context: vscode.ExtensionContext) {
     'allConflictTreeView'
   )
 
+  // init: scan all conflicts in the current workspace
+  context.subscriptions.push(
+    vscode.commands.registerCommand('somanyconflicts.scan', async () => {
+      await init()
+      if (allConflictSections.length == 0) {
+        vscode.window.showWarningMessage(
+          'Found no merge conflicts in the current workspace!'
+        )
+      } else {
+        conflictSectionsToTreeItem(
+          allConflictSections,
+          allConflictTreeRoot
+        ).then((res) => {
+          allConflictTreeViewProvider.refresh()
+          vscode.commands.executeCommand('allConflictTreeView.focus')
+        })
+      }
+    })
+  )
+
   // feature1: topo-sort for the optimal order to resolve conflicts
   context.subscriptions.push(
-    vscode.commands.registerCommand('somanyconflicts.somany', async () => {
+    vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
         await init()
       }
@@ -178,7 +198,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
           }
           if (allConflictSections.length == 0) {
-            message = 'Found no merge conflicts in the opened workspace!'
+            message = 'Found no merge conflicts in the current workspace!'
             vscode.window.showWarningMessage(message)
             return
           } else {
