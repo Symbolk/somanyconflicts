@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
-        await init()
+        vscode.commands.executeCommand('somanyconflicts.scan')
       }
       vscode.window.withProgress(
         {
@@ -84,12 +84,6 @@ export function activate(context: vscode.ExtensionContext) {
           ).then((res) => {
             suggestedConflictTreeViewProvider.refresh()
             vscode.commands.executeCommand('suggestedConflictTreeView.focus')
-          })
-          conflictSectionsToTreeItem(
-            allConflictSections,
-            allConflictTreeRoot
-          ).then((res) => {
-            allConflictTreeViewProvider.refresh()
           })
           progress.report({ increment: 100 })
         }
@@ -119,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!isReady()) {
-          await init()
+          vscode.commands.executeCommand('somanyconflicts.scan')
         }
         // locate the focusing conflict and start from it
         SoManyConflicts.suggestRelatedConflicts(
@@ -145,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
           return
         }
         if (!isReady()) {
-          await init()
+          vscode.commands.executeCommand('somanyconflicts.scan')
         }
         // TODO: record resolution strategy of conflicts
 
