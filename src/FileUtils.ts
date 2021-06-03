@@ -14,10 +14,29 @@ import {
 import path = require('path')
 import util = require('util')
 import { Constants } from './Constants'
+import { Language } from './Language'
 const readdirPromise = util.promisify(readdir)
 const statPromise = util.promisify(stat)
 
 export class FileUtils {
+  public static detectLanguage(path: string): Language {
+    let extension: string | undefined = path.split('.').pop()
+    switch (extension) {
+      case undefined:
+        return Language.Other
+      case 'java':
+        return Language.Java
+      case 'js':
+        return Language.JavaScript
+      case 'ts':
+        return Language.TypeScript
+      case 'py':
+        return Language.Python
+      default:
+        return Language.Other
+    }
+  }
+
   public static readFileContent(absPath: string): string {
     return readFileSync(absPath, 'utf-8')
   }

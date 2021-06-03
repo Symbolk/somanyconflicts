@@ -19,6 +19,7 @@ const graphlib = require('@dagrejs/graphlib')
 import * as TreeSitter from 'tree-sitter'
 import { Identifier } from './Identifier'
 import { Constants } from './Constants'
+import { Language } from './Language'
 // import { Point, SyntaxNode, Tree, Query, QueryMatch, QueryCapture } from 'tree-sitter'
 // const JavaScript = require('tree-sitter-javascript')
 const TypeScript = require('tree-sitter-typescript').typescript
@@ -47,6 +48,7 @@ export class SoManyConflicts {
         // scan and parse all conflict blocks
         let content: string = FileUtils.readFileContent(absPath)
         let uri: Uri = Uri.file(absPath)
+        let language: Language = FileUtils.detectLanguage(absPath)
 
         const sections: ISection[] = Parser.parse(uri, content)
         const conflictSections: ISection[] = sections.filter(
@@ -69,7 +71,7 @@ export class SoManyConflicts {
             this.filterConflictingSymbols(conflict, symbols)
           }
           // AST: extract identifiers (def/use) to complement LSP results
-          this.extractConflictingIdentifiers(conflict)
+          this.extractConflictingIdentifiers(conflict, language)
 
           console.log(conflictSection)
         }
@@ -82,13 +84,22 @@ export class SoManyConflicts {
     return conflictSectionsByFile
   }
 
-  private static extractConflictingIdentifiers(conflict: Conflict) {
-    conflict.base.identifiers = this.analyzeCode(conflict.base.lines)
-    conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines)
-    conflict.theirs.identifiers = this.analyzeCode(conflict.theirs.lines)
+  private static extractConflictingIdentifiers(
+    conflict: Conflict,
+    language: Language
+  ) {
+    conflict.base.identifiers = this.analyzeCode(conflict.base.lines, language)
+    conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines, language)
+    conflict.theirs.identifiers = this.analyzeCode(
+      conflict.theirs.lines,
+      language
+    )
   }
 
-  private static analyzeCode(codeLines: string[]): Identifier[] {
+  private static analyzeCode(
+    codeLines: string[],
+    language: Language
+  ): Identifier[] {
     // const tree: TreeSitter.Tree = treeSitter.parse(
     //   (index: number, position: TreeSitter.Point) => {
     //     let line = codeLines[position.row]
@@ -99,23 +110,41 @@ export class SoManyConflicts {
     //     }
     //   }
     // )
-    const tree: TreeSitter.Tree = treeSitter.parse(codeLines.join('\n'))
-    // console.log(tree.rootNode.toString())
-
-    const query = new TreeSitter.Query(TypeScript, Constants.typeScriptQuery)
-
     let identifiers: Identifier[] = []
-    const matches: TreeSitter.QueryMatch[] = query.matches(tree.rootNode)
-    for (let match of matches) {
-      const captures: TreeSitter.QueryCapture[] = match.captures
-      for (let capture of captures) {
-        if (capture.node !== undefined) {
-          if (capture.node.text !== undefined) {
-            identifiers.push(new Identifier(capture.name, capture.node.text))
+    let queryString = ''
+    switch (language) {
+      case Language.Java:
+        queryString = Constants.javaQuery
+        break
+      case Language.JavaScript:
+        queryString = Constants.javaScriptQuery
+        break
+      case Language.TypeScript:
+        queryString = Constants.typeScriptQuery
+        break
+      case Language.Python:
+        queryString = Constants.pythonQuery
+        break
+      default:
+        queryString = ''
+    }
+
+    if (queryString.length > 0) {
+      const tree: TreeSitter.Tree = treeSitter.parse(codeLines.join('\n'))
+      const query = new TreeSitter.Query(TypeScript, Constants.typeScriptQuery)
+      const matches: TreeSitter.QueryMatch[] = query.matches(tree.rootNode)
+      for (let match of matches) {
+        const captures: TreeSitter.QueryCapture[] = match.captures
+        for (let capture of captures) {
+          if (capture.node !== undefined) {
+            if (capture.node.text !== undefined) {
+              identifiers.push(new Identifier(capture.name, capture.node.text))
+            }
           }
         }
       }
     }
+
     return identifiers
   }
 
