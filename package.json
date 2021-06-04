@@ -50,7 +50,7 @@
     "viewsWelcome":[
       {
         "view": "suggestedConflictTreeView",
-        "contents": "[Find Suggested Conflicts](command:somanyconflicts.start)"
+        "contents": "[Suggest Conflicts to Resolve](command:somanyconflicts.start)"
       },
       {
         "view": "allConflictTreeView",

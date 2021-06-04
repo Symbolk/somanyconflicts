@@ -1,13 +1,4 @@
-import {
-  window,
-  TextEditor,
-  Uri,
-  Range,
-  Location,
-  Position,
-  commands,
-  DocumentSymbol,
-} from 'vscode'
+import { window, TextEditor, Uri, Range, Location, Position, commands, DocumentSymbol } from 'vscode'
 import { Parser } from './Parser'
 import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
@@ -27,17 +18,13 @@ const treeSitter = new TreeSitter()
 treeSitter.setLanguage(TypeScript)
 
 export class SoManyConflicts {
-  public static async scanAllConflicts(
-    workspace: string
-  ): Promise<Map<Uri, ISection[]>> {
+  public static async scanAllConflicts(workspace: string): Promise<Map<Uri, ISection[]>> {
     let message: string = ''
     let conflictSectionsByFile = new Map<Uri, ISection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
-      let filePaths: string[] = await FileUtils.getConflictingFilePaths(
-        workspace
-      )
+      let filePaths: string[] = await FileUtils.getConflictingFilePaths(workspace)
       if (filePaths.length == 0) {
         message = 'Found no conflicting files in the workspace!'
         window.showWarningMessage(message)
@@ -51,19 +38,14 @@ export class SoManyConflicts {
         let language: Language = FileUtils.detectLanguage(absPath)
 
         const sections: ISection[] = Parser.parse(uri, content)
-        const conflictSections: ISection[] = sections.filter(
-          (sec) => sec instanceof ConflictSection
-        )
+        const conflictSections: ISection[] = sections.filter((sec) => sec instanceof ConflictSection)
 
         // extract identifiers in the whole file
         /* P.S. actually the symbol provider is quite unreliable
          * it often fails to return ALL symbols but only 1-st level (for the issues of LS on conflicting files)
          * so avoid counting on pure language service
          */
-        let symbols = (await commands.executeCommand(
-          'vscode.executeDocumentSymbolProvider',
-          uri
-        )) as DocumentSymbol[]
+        let symbols = (await commands.executeCommand('vscode.executeDocumentSymbolProvider', uri)) as DocumentSymbol[]
         for (let conflictSection of conflictSections) {
           let conflict: Conflict = (<ConflictSection>conflictSection).conflict
           // LSP: filter symbols involved in each conflict block
@@ -84,22 +66,13 @@ export class SoManyConflicts {
     return conflictSectionsByFile
   }
 
-  private static extractConflictingIdentifiers(
-    conflict: Conflict,
-    language: Language
-  ) {
+  private static extractConflictingIdentifiers(conflict: Conflict, language: Language) {
     conflict.base.identifiers = this.analyzeCode(conflict.base.lines, language)
     conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines, language)
-    conflict.theirs.identifiers = this.analyzeCode(
-      conflict.theirs.lines,
-      language
-    )
+    conflict.theirs.identifiers = this.analyzeCode(conflict.theirs.lines, language)
   }
 
-  private static analyzeCode(
-    codeLines: string[],
-    language: Language
-  ): Identifier[] {
+  private static analyzeCode(codeLines: string[], language: Language): Identifier[] {
     // const tree: TreeSitter.Tree = treeSitter.parse(
     //   (index: number, position: TreeSitter.Point) => {
     //     let line = codeLines[position.row]
@@ -162,11 +135,9 @@ export class SoManyConflicts {
 
     // construct graph edges
     for (i = 0; i < allConflictSections.length; ++i) {
-      let conflict1: Conflict = (<ConflictSection>allConflictSections[i])
-        .conflict
+      let conflict1: Conflict = (<ConflictSection>allConflictSections[i]).conflict
       for (j = i + 1; j < allConflictSections.length; ++j) {
-        let conflict2: Conflict = (<ConflictSection>allConflictSections[j])
-          .conflict
+        let conflict2: Conflict = (<ConflictSection>allConflictSections[j]).conflict
         let weight = AlgUtils.estimateRelevance(conflict1, conflict2)
         if (weight > 0) {
           let lastWeight = graph.edge()
@@ -181,10 +152,7 @@ export class SoManyConflicts {
     return graph
   }
 
-  public static suggestStartingPoint(
-    allConflictSections: ISection[],
-    graph: any
-  ): ISection[][] {
+  public static suggestStartingPoint(allConflictSections: ISection[], graph: any): ISection[][] {
     let groupedConflictSections: ISection[][] = []
     let components = graphlib.alg.components(graph)
     components.sort(function (a: [], b: []) {
@@ -205,23 +173,17 @@ export class SoManyConflicts {
     return groupedConflictSections
   }
 
-  public static suggestResolutionStrategy(
-    allConflictSections: ISection[],
-    conflictIndex: number,
-    graph: any
-  ) {
+  public static suggestResolutionStrategy(allConflictSections: ISection[], conflictIndex: number, graph: any) {
+    // find conflict section given index
+
+    // pop stragies prob and get the first
+
+    // show with code lens or highlighted line ranges
     console.log('No suggestion.')
   }
 
-  public static suggestRelatedConflicts(
-    allConflictSections: ISection[],
-    conflictIndex: number,
-    graph: any
-  ) {
-    let focusedConflict: Conflict = this.getConflictByIndex(
-      allConflictSections,
-      conflictIndex
-    )
+  public static suggestRelatedConflicts(allConflictSections: ISection[], conflictIndex: number, graph: any) {
+    let focusedConflict: Conflict = this.getConflictByIndex(allConflictSections, conflictIndex)
     let locations: Location[] = []
     let edges = graph.nodeEdges(conflictIndex)
     if (edges) {
@@ -244,57 +206,30 @@ export class SoManyConflicts {
     if (edges.length == 0 || locations.length == 0) {
       window.showWarningMessage('Found no related conflicts for this conflict.')
     } else {
-      commands.executeCommand(
-        'editor.action.peekLocations',
-        focusedConflict.uri,
-        focusedConflict.ours.range.start,
-        locations,
-        'peek'
-      )
+      commands.executeCommand('editor.action.peekLocations', focusedConflict.uri, focusedConflict.ours.range.start, locations, 'peek')
     }
   }
 
-  private static getConflictByIndex(
-    allConflictSections: ISection[],
-    index: number
-  ): Conflict {
+  private static getConflictByIndex(allConflictSections: ISection[], index: number): Conflict {
     return (<ConflictSection>allConflictSections[index]).conflict
   }
 
-  private static async filterConflictingSymbols(
-    conflict: Conflict,
-    symbols: DocumentSymbol[]
-  ) {
+  private static async filterConflictingSymbols(conflict: Conflict, symbols: DocumentSymbol[]) {
     for (let symbol of symbols) {
       if (conflict.ours.range.contains(symbol.selectionRange)) {
-        let refs = await this.getRefs(
-          conflict.uri!,
-          this.middlePosition(symbol.selectionRange)
-        )
+        let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addOurIdentifier(
-          new Symbol(symbol, refs == undefined ? [] : refs)
-        )
+        conflict.addOurIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
       }
       if (conflict.base.range.contains(symbol.selectionRange)) {
-        let refs = await this.getRefs(
-          conflict.uri!,
-          this.middlePosition(symbol.selectionRange)
-        )
+        let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addBaseIdentifier(
-          new Symbol(symbol, refs == undefined ? [] : refs)
-        )
+        conflict.addBaseIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
       }
       if (conflict.theirs.range.contains(symbol.selectionRange)) {
-        let refs = await this.getRefs(
-          conflict.uri!,
-          this.middlePosition(symbol.selectionRange)
-        )
+        let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addTheirIdentifier(
-          new Symbol(symbol, refs == undefined ? [] : refs)
-        )
+        conflict.addTheirIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
       }
       if (symbol.children.length > 0) {
         this.filterConflictingSymbols(conflict, symbol.children)
@@ -302,22 +237,12 @@ export class SoManyConflicts {
     }
   }
   private static middlePosition(range: Range): Position {
-    return new Position(
-      Math.round((range.start.line + range.end.line) / 2),
-      Math.round((range.start.character + range.end.character) / 2)
-    )
+    return new Position(Math.round((range.start.line + range.end.line) / 2), Math.round((range.start.character + range.end.character) / 2))
   }
 
-  private static async getRefs(
-    uri: Uri,
-    position: Position
-  ): Promise<Location[] | undefined> {
+  private static async getRefs(uri: Uri, position: Position): Promise<Location[] | undefined> {
     // let refs = undefined
-    let refs = await commands.executeCommand<Location[]>(
-      'vscode.executeReferenceProvider',
-      uri,
-      position
-    )
+    let refs = await commands.executeCommand<Location[]>('vscode.executeReferenceProvider', uri, position)
     return refs
   }
 }
