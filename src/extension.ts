@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
-        vscode.commands.executeCommand('somanyconflicts.scan')
+        await vscode.commands.executeCommand('somanyconflicts.scan')
       }
       vscode.window.withProgress(
         {
@@ -113,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         if (!isReady()) {
-          vscode.commands.executeCommand('somanyconflicts.scan')
+          await vscode.commands.executeCommand('somanyconflicts.scan')
         }
         // locate the focusing conflict and start from it
         SoManyConflicts.suggestRelatedConflicts(
@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
           return
         }
         if (!isReady()) {
-          vscode.commands.executeCommand('somanyconflicts.scan')
+          await vscode.commands.executeCommand('somanyconflicts.scan')
         }
         // TODO: record resolution strategy of conflicts
 

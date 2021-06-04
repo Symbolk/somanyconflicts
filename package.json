@@ -47,6 +47,16 @@
         }
       ]
     },
+    "viewsWelcome":[
+      {
+        "view": "suggestedConflictTreeView",
+        "contents": "[Find Suggested Conflicts](command:somanyconflicts.start)"
+      },
+      {
+        "view": "allConflictTreeView",
+        "contents": "[Show All Conflicts](command:somanyconflicts.scan)"
+      }
+    ],
     "commands": [
       {
         "command": "somanyconflicts.scan",
