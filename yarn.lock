@@ -410,7 +410,7 @@ astral-regex@^2.0.0:
 
 async@*:
   version "3.2.0"
-  resolved "https://registry.npm.taobao.org/async/download/async-3.2.0.tgz#b3a2685c5ebb641d3de02d161002c60fc9f85720"
+  resolved "https://registry.npm.taobao.org/async/download/async-3.2.0.tgz?cache=0&sync_timestamp=1582540512270&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fasync%2Fdownload%2Fasync-3.2.0.tgz#b3a2685c5ebb641d3de02d161002c60fc9f85720"
   integrity sha1-s6JoXF67ZB094C0WEALGD8n4VyA=
 
 asynckit@^0.4.0:
@@ -2677,6 +2677,11 @@ sshpk@^1.7.0:
     jsbn "~0.1.0"
     safer-buffer "^2.0.2"
     tweetnacl "~0.14.0"
+
+string-similarity@^4.0.4:
+  version "4.0.4"
+  resolved "https://registry.npm.taobao.org/string-similarity/download/string-similarity-4.0.4.tgz?cache=0&sync_timestamp=1611982742725&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fstring-similarity%2Fdownload%2Fstring-similarity-4.0.4.tgz#42d01ab0b34660ea8a018da8f56a3309bb8b2a5b"
+  integrity sha1-QtAasLNGYOqKAY2o9WozCbuLKls=
 
 string-width@^1.0.1:
   version "1.0.2"
