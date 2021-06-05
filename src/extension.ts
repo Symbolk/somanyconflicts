@@ -1,9 +1,4 @@
-import {
-  conflictSectionsToTreeItem,
-  ConflictTreeItem,
-  ConflictTreeViewProvider,
-  suggestionsToTreeItem,
-} from './ConflictTreeView'
+import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider, suggestionsToTreeItem } from './ConflictTreeView'
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode'
@@ -19,41 +14,56 @@ var Graph = require('@dagrejs/graphlib').Graph
 export function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
-  console.log(
-    'Congratulations, your extension "somanyconflicts" is now active!'
-  )
+  console.log('Congratulations, your extension "somanyconflicts" is now active!')
 
   let message: string = ''
   // raw conflict blocks
   let allConflictSections: ISection[] = []
   // map from uri: ISection[]
-  let conflictSectionsByFile = new Map<vscode.Uri, ISection[]>()
+  let conflictSectionsByFile = new Map<string, ISection[]>()
   // let conflictSectionsByFile: { [key: string]: ISection[] } = {}
   let graph: typeof Graph | undefined = undefined
 
   addSubcommandOpenFile(context)
 
-  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] =
-    createTree('suggestedConflictTreeView')
-  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree(
-    'allConflictTreeView'
-  )
+  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView')
+  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView')
 
   // init: scan all conflicts in the current workspace
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
       await init()
       if (allConflictSections.length == 0) {
-        vscode.window.showWarningMessage(
-          'Found no merge conflicts in the current workspace!'
-        )
+        vscode.window.showWarningMessage('Found no merge conflicts in the current workspace!')
       } else {
-        conflictSectionsToTreeItem(
-          allConflictSections,
-          allConflictTreeRoot
-        ).then((res) => {
+        conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
           allConflictTreeViewProvider.refresh()
           vscode.commands.executeCommand('allConflictTreeView.focus')
+        })
+
+        // check if the change edits a conflict section
+        vscode.workspace.onDidChangeTextDocument((event) => {
+          if (event.contentChanges.length > 0) {
+            // currently support well for code lens resolution, may contain bugs for manual edit
+            if (conflictSectionsByFile.has(event.document.uri.fsPath)) {
+              let conflictSections = conflictSectionsByFile.get(event.document.uri.fsPath)
+              if (conflictSections) {
+                for (let change of event.contentChanges) {
+                  for (let section of conflictSections) {
+                    let conflictSection = <ConflictSection>section
+                    let conflict = conflictSection.conflict
+                    if (change.range.contains(conflict.range)) {
+                      // check whether the conflict is resolved
+                      // compare text line by line to update the strategy prob
+                      conflictSection.checkStrategy(change.text)
+                      return
+                      // TODO: check if resolved
+                    }
+                  }
+                }
+              }
+            }
+          }
         })
       }
     })
@@ -76,12 +86,8 @@ export function activate(context: vscode.ExtensionContext) {
             console.log('User canceled the scanning.')
           })
 
-          let groupedConflictSections: ISection[][] =
-            SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
-          suggestionsToTreeItem(
-            groupedConflictSections,
-            suggestedConflictTreeRoot
-          ).then((res) => {
+          let groupedConflictSections: ISection[][] = SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+          suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then((res) => {
             suggestedConflictTreeViewProvider.refresh()
             vscode.commands.executeCommand('suggestedConflictTreeView.focus')
           })
@@ -91,68 +97,47 @@ export function activate(context: vscode.ExtensionContext) {
     })
   )
 
-  let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider(
-    '*',
-    new ConflictLensProvider()
-  )
+  let codeLensProviderDisposable = vscode.languages.registerCodeLensProvider('*', new ConflictLensProvider())
   // push the command and CodeLens provider to the context so it can be disposed of later
   context.subscriptions.push(codeLensProviderDisposable)
 
   // feature2: recommend the next (related or similar) conflict to resolve
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'somanyconflicts.next',
-      async (...args: any[]) => {
-        let conflictIndex: number = findSelectedConflictIndex(args)
+    vscode.commands.registerCommand('somanyconflicts.next', async (...args: any[]) => {
+      let conflictIndex: number = findSelectedConflictIndex(args)
 
-        if (conflictIndex < 0) {
-          vscode.window.showWarningMessage(
-            'Editor cursor is not within any merge conflict!'
-          )
-          return
-        }
-
-        if (!isReady()) {
-          await vscode.commands.executeCommand('somanyconflicts.scan')
-        }
-        // locate the focusing conflict and start from it
-        SoManyConflicts.suggestRelatedConflicts(
-          allConflictSections,
-          conflictIndex,
-          graph
-        )
+      if (conflictIndex < 0) {
+        vscode.window.showWarningMessage('Editor cursor is not within any merge conflict!')
+        return
       }
-    )
+
+      if (!isReady()) {
+        await vscode.commands.executeCommand('somanyconflicts.scan')
+      }
+      // locate the focusing conflict and start from it
+      SoManyConflicts.suggestRelatedConflicts(allConflictSections, conflictIndex, graph)
+    })
   )
 
   // feature3: recommend resolution strategy given conflict resolved before
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'somanyconflicts.how',
-      async (...args: any[]) => {
-        let conflictIndex: number = findSelectedConflictIndex(args)
+    vscode.commands.registerCommand('somanyconflicts.how', async (...args: any[]) => {
+      let conflictIndex: number = findSelectedConflictIndex(args)
 
-        if (conflictIndex < 0) {
-          vscode.window.showWarningMessage(
-            'Editor cursor is not within any merge conflict!'
-          )
-          return
-        }
-        if (!isReady()) {
-          await vscode.commands.executeCommand('somanyconflicts.scan')
-        }
-        // TODO: record resolution strategy of conflicts
-
-        // locate the focusing conflict and start from it
-        // query previously resolved related conflicts
-        // suggest resolution strategy accordingly
-        SoManyConflicts.suggestResolutionStrategy(
-          allConflictSections,
-          conflictIndex,
-          graph
-        )
+      if (conflictIndex < 0) {
+        vscode.window.showWarningMessage('Editor cursor is not within any merge conflict!')
+        return
       }
-    )
+      if (!isReady()) {
+        await vscode.commands.executeCommand('somanyconflicts.scan')
+      }
+      // TODO: record resolution strategy of conflicts
+
+      // locate the focusing conflict and start from it
+      // query previously resolved related conflicts
+      // suggest resolution strategy accordingly
+      SoManyConflicts.suggestResolutionStrategy(allConflictSections, conflictIndex, graph)
+    })
   )
 
   // check if the workspace is readily prepared
@@ -182,9 +167,7 @@ export function activate(context: vscode.ExtensionContext) {
           //   progress.report({ increment: 10 })
           // }, 1000)
 
-          conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(
-            workspace
-          )
+          conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(workspace)
 
           for (let sections of conflictSectionsByFile.values()) {
             for (let section of sections) {
@@ -204,10 +187,7 @@ export function activate(context: vscode.ExtensionContext) {
               return
             }
           }
-          message =
-            'Found ' +
-            allConflictSections.length +
-            ' conflicts in total in the current workspace.'
+          message = 'Found ' + allConflictSections.length + ' conflicts in total in the current workspace.'
           vscode.window.showInformationMessage(message)
           progress.report({ increment: 100 })
         }
@@ -227,10 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
       for (let i in allConflictSections) {
         if (allConflictSections[i] instanceof ConflictSection) {
           let conflict = (<ConflictSection>allConflictSections[i]).conflict
-          if (
-            conflict.uri?.path == invokedConflict.uri?.path &&
-            conflict.range.isEqual(invokedConflict.range)
-          ) {
+          if (conflict.uri?.path == invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
             return +i
           }
         }
@@ -241,11 +218,7 @@ export function activate(context: vscode.ExtensionContext) {
         for (let i in allConflictSections) {
           if (allConflictSections[i] instanceof ConflictSection) {
             let conflict = (<ConflictSection>allConflictSections[i]).conflict
-            if (
-              conflict.range.contains(
-                vscode.window.activeTextEditor.selection.active
-              )
-            ) {
+            if (conflict.range.contains(vscode.window.activeTextEditor.selection.active)) {
               return +i
             }
           }
@@ -260,10 +233,7 @@ export function deactivate() {}
 
 function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   const commandsToOpenFiles = 'somanyconflicts.openFileAt'
-  const openFileHandler = async function (
-    uri: vscode.Uri,
-    range: vscode.Range
-  ) {
+  const openFileHandler = async function (uri: vscode.Uri, range: vscode.Range) {
     await vscode.commands.executeCommand('vscode.open', uri).then((x) => {
       let activeEditor = vscode.window.activeTextEditor
       if (activeEditor) {
@@ -272,14 +242,10 @@ function addSubcommandOpenFile(context: vscode.ExtensionContext) {
       }
     })
   }
-  context.subscriptions.push(
-    vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler)
-  )
+  context.subscriptions.push(vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler))
 }
 
-function createTree(
-  viewName: string
-): [ConflictTreeItem[], ConflictTreeViewProvider] {
+function createTree(viewName: string): [ConflictTreeItem[], ConflictTreeViewProvider] {
   let treeRoot: ConflictTreeItem[] = []
   const treeViewProvider = new ConflictTreeViewProvider(treeRoot)
   vscode.window.registerTreeDataProvider(viewName, treeViewProvider)

@@ -18,9 +18,9 @@ const treeSitter = new TreeSitter()
 treeSitter.setLanguage(TypeScript)
 
 export class SoManyConflicts {
-  public static async scanAllConflicts(workspace: string): Promise<Map<Uri, ISection[]>> {
+  public static async scanAllConflicts(workspace: string): Promise<Map<string, ISection[]>> {
     let message: string = ''
-    let conflictSectionsByFile = new Map<Uri, ISection[]>()
+    let conflictSectionsByFile = new Map<string, ISection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
@@ -57,7 +57,7 @@ export class SoManyConflicts {
 
           console.log(conflictSection)
         }
-        conflictSectionsByFile.set(uri, conflictSections)
+        conflictSectionsByFile.set(uri.fsPath, conflictSections)
       }
     } catch (err) {
       window.showErrorMessage(err.message)
