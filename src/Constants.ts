@@ -10,7 +10,6 @@ export class Constants {
   (class_declaration name: (type_identifier) @type-def)
   (public_field_definition name: (property_identifier) @field-def)
   (labeled_statement label: (statement_identifier) @field-def)
-  (member_expression property: (property_identifier) @field-ref)
   (function_declaration name: (identifier) @function-def)
   (method_definition name: (property_identifier) @method-def)
   (variable_declarator 
@@ -20,11 +19,12 @@ export class Constants {
       function: [
         (identifier) @function-ref
         (member_expression
-          object: (identifier) @method-obj
-          property: (property_identifier) @method-def)
+          object: [(identifier) (non_null_expression)] @method-obj
+          property: (property_identifier) @method-ref)
    ])
+  (member_expression property: (property_identifier) @field-ref)
   `
-  
+
   public static javaScriptQuery: string = ''
 
   public static javaQuery: string = `

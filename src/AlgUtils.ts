@@ -10,7 +10,7 @@ export class AlgUtils {
       this.computeDependencyForSide(conflict1.ours.identifiers, conflict2.ours.identifiers) +
       this.computeDependencyForSide(conflict1.base.identifiers, conflict2.base.identifiers) +
       this.computeDependencyForSide(conflict1.theirs.identifiers, conflict2.theirs.identifiers)
-    return +(sum / 3).toFixed
+    return +(sum / 3).toFixed(4)
   }
 
   private static computeDependencyForSide(ids1: Identifier[], ids2: Identifier[]): number {
