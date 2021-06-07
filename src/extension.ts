@@ -8,6 +8,8 @@ import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
 import { ConflictSection } from './ConflictSection'
 var Graph = require('@dagrejs/graphlib').Graph
+const graphlib = require('@dagrejs/graphlib')
+import { Queue } from 'queue-typescript'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -59,6 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
                         // check whether the conflict is resolved
                         // compare text line by line to update the strategy prob
                         conflictSection.checkStrategy(change.text)
+                        console.log('Manually resolved: ' + conflictSection.index + ' via ' + conflictSection.stragegy.display)
                         // check if resolved and propagate to others
                         propagateStrategy(conflictSection)
                         return
@@ -172,10 +175,13 @@ export function activate(context: vscode.ExtensionContext) {
 
           conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(workspace)
 
+          let i: number = 0
           for (let sections of conflictSectionsByFile.values()) {
             for (let section of sections) {
               if (section instanceof ConflictSection) {
+                section.index = i.toString()
                 allConflictSections.push(<ConflictSection>section)
+                i += 1
               }
             }
           }
@@ -206,8 +212,37 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   function propagateStrategy(section: ConflictSection) {
-    // locate in the graph
-    // find and update connected nodes with DFS/BFS
+    if (!graph || graph == undefined) {
+      return
+    }
+
+    // save index
+    let visited = new Set<string>()
+    let queue = new Queue<string>()
+    queue.enqueue(section.index)
+    visited.add(section.index)
+    while (queue.length > 0) {
+      let temp = queue.dequeue()
+      if (temp) {
+        visited.add(temp)
+        let edges = graph.nodeEdges(temp)
+        if (edges && edges.length > 0) {
+          for (let e of edges) {
+            if (!visited.has(e.v)) {
+              let conflictSection = allConflictSections[e.v]
+              let newProbs = conflictSection.updateStrategy(section.strategiesProb, graph.edge(e))
+              queue.enqueue(e.v)
+            }
+            if (!visited.has(e.w)) {
+              let conflictSection = allConflictSections[e.w]
+              let newProbs = conflictSection.updateStrategy(section.strategiesProb, graph.edge(e))
+              queue.enqueue(e.w)
+            }
+          }
+        }
+      }
+    }
+    // TODO: consider direction, find and update connected nodes with DFS/BFS
   }
 
   function findSelectedConflictIndex(args: any[]): number {
@@ -217,7 +252,8 @@ export function activate(context: vscode.ExtensionContext) {
       for (let i in allConflictSections) {
         let conflict = allConflictSections[i].conflict
         if (conflict.uri?.path == invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
-          return +i
+          // currently use array index as index, but can be extended (like fileIndex:conflictIndex)
+          return +allConflictSections[i].index
         }
       }
     } else {

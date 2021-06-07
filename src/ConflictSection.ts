@@ -49,12 +49,21 @@ export class ConflictSection implements ISection {
     this._strategiesProb = value
   }
 
+  private _stragegy: Strategy = Strategy.Unknown
+  public get stragegy(): Strategy {
+    return this._stragegy
+  }
+  public set stragegy(value: Strategy) {
+    this._stragegy = value
+  }
+
   public checkStrategy(newText: string) {
     // compare the new text with each side and combination to check the strategy (trimmed line by line)
     let lines: string[] = newText.split(/\r\n|\r|\n/)
     lines = lines.filter((line) => line.trim().length > 0)
     if (lines.length == 0) {
       this._strategiesProb[4] = 1.0
+      this._stragegy = Strategy.AcceptNone
       return
     }
     let similarities: number[] = []
@@ -64,6 +73,7 @@ export class ConflictSection implements ISection {
       this._resolvedCode = newText
       this._hasResolved = true
       this._strategiesProb[0] = 1.0
+      this._stragegy = Strategy.AcceptOurs
       return
     } else {
       similarities.push(simi)
@@ -72,6 +82,7 @@ export class ConflictSection implements ISection {
         this._resolvedCode = newText
         this._hasResolved = true
         this._strategiesProb[1] = 1.0
+        this._stragegy = Strategy.AcceptTheirs
         return
       } else {
         similarities.push(simi)
@@ -80,6 +91,7 @@ export class ConflictSection implements ISection {
           this._resolvedCode = newText
           this._hasResolved = true
           this._strategiesProb[2] = 1.0
+          this._stragegy = Strategy.AcceptBase
           return
         } else {
           similarities.push(simi)
@@ -88,6 +100,7 @@ export class ConflictSection implements ISection {
             this._resolvedCode = newText
             this._hasResolved = true
             this._strategiesProb[3] = 1.0
+            this._stragegy = Strategy.AcceptBoth
             return
           } else {
             similarities.push(simi)
@@ -101,6 +114,22 @@ export class ConflictSection implements ISection {
       this._strategiesProb[i] = sim
       i += 1
     }
+  }
+
+  public updateStrategy(probs: Array<number>, weight: number): Array<number> {
+    let newProbs = probs.map((p) => p * weight)
+    for (let i in newProbs) {
+      this._strategiesProb[i] += newProbs[i]
+    }
+    let sum = this._strategiesProb.reduce((a, b) => a + b, 0)
+
+    if (sum != 0) {
+      for (let i in this._strategiesProb) {
+        this._strategiesProb[i] = +(this._strategiesProb[i] / sum).toFixed(4)
+      }
+    }
+
+    return this._strategiesProb
   }
 
   public getText(): string {
