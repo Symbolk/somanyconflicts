@@ -103,9 +103,11 @@ export class ConflictSection implements ISection {
     }
   }
 
-  
   public getText(): string {
     return this._conflict.getSqueezedText()
   }
- 
+
+  public getLineRange(): string {
+    return '(' + (this._conflict.range.start.line + 1) + '-' + (this._conflict.range.end.line + 1) + ')'
+  }
 }

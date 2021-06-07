@@ -64,7 +64,7 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
     let conflict = conflictSection.conflict
     let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
     let range = new vscode.Range(start, conflict.range.end)
-    let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
+    let label = conflictSection.getLineRange() + ' ' + doc.getText(range).trimLeft()
     let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
     let flag = false
     for (let parent of parents) {
@@ -92,7 +92,7 @@ export async function suggestionsToTreeItem(suggestions: ConflictSection[][], pa
       let conflict = conflictSection.conflict
       let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
       let range = new vscode.Range(start, conflict.range.end)
-      let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
+      let label = conflictSection.getLineRange() + ' ' + doc.getText(range).trimLeft()
       let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
       groupRoot.children.push(newConflict)
     }
