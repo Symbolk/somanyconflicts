@@ -3,10 +3,10 @@
 // resolution stratety
 
 export const Strategy = {
-  AcceptOurs: { id: 0, display: 'Accept Current' },
-  AcceptTheirs: { id: 1, display: 'Accept Incoming' },
-  AcceptBase: { id: 2, display: 'Accept Base' },
-  AcceptBoth: { id: 3, display: 'Accept Both' },
-  AcceptNone: { id: 4, display: 'Accept None' },
-  Unknown: { id: 5, display: 'Unknown' },
+  AcceptOurs: { index: 0, display: 'Accept Current' },
+  AcceptTheirs: { index: 1, display: 'Accept Incoming' },
+  AcceptBase: { index: 2, display: 'Accept Base' },
+  AcceptBoth: { index: 3, display: 'Accept Both' },
+  AcceptNone: { index: 4, display: 'Accept None' },
+  Unknown: { index: 5, display: 'Unknown' },
 }

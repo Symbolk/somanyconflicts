@@ -122,7 +122,7 @@ export class SoManyConflicts {
   }
 
   public static constructGraph(allConflictSections: ISection[]) {
-    let graph = new graphlib.Graph({ directed: true })
+    let graph = new graphlib.Graph({ directed: true, multigraph: true })
 
     // for each pair of conflicts
     let i,
@@ -138,14 +138,18 @@ export class SoManyConflicts {
       let conflict1: Conflict = (<ConflictSection>allConflictSections[i]).conflict
       for (j = i + 1; j < allConflictSections.length; ++j) {
         let conflict2: Conflict = (<ConflictSection>allConflictSections[j]).conflict
-        let weight = AlgUtils.estimateRelevance(conflict1, conflict2)
-        if (weight > 0) {
+        let dependency = AlgUtils.computeDependency(conflict1, conflict2)
+        if (dependency > 0) {
           let lastWeight = graph.edge()
           if (lastWeight == undefined) {
-            graph.setEdge(i, j, weight)
+            graph.setEdge(i, j, dependency)
           } else {
-            graph.setEdge(i, j, lastWeight + weight)
+            graph.setEdge(i, j, lastWeight + dependency)
           }
+        }
+        let similarity = AlgUtils.computeSimilarity(conflict1, conflict2)
+        if(similarity > 0.5) {
+          graph.setEdge(i, j, similarity)
         }
       }
     }
