@@ -20,7 +20,7 @@ treeSitter.setLanguage(TypeScript)
 export class SoManyConflicts {
   public static async scanAllConflicts(workspace: string): Promise<Map<string, ISection[]>> {
     let message: string = ''
-    let conflictSectionsByFile = new Map<string, ISection[]>()
+    let sectionsByFile = new Map<string, ISection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
@@ -28,7 +28,7 @@ export class SoManyConflicts {
       if (filePaths.length == 0) {
         message = 'Found no conflicting files in the workspace!'
         window.showWarningMessage(message)
-        return conflictSectionsByFile
+        return sectionsByFile
       }
       for (const absPath of filePaths) {
         console.log('Start parsing ' + absPath)
@@ -38,7 +38,7 @@ export class SoManyConflicts {
         let language: Language = FileUtils.detectLanguage(absPath)
 
         const sections: ISection[] = Parser.parse(uri, content)
-        const conflictSections: ISection[] = sections.filter((sec) => sec instanceof ConflictSection)
+        const conflictSections: ConflictSection[] = sections.filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
 
         // extract identifiers in the whole file
         /* P.S. actually the symbol provider is quite unreliable
@@ -47,7 +47,7 @@ export class SoManyConflicts {
          */
         let symbols = (await commands.executeCommand('vscode.executeDocumentSymbolProvider', uri)) as DocumentSymbol[]
         for (let conflictSection of conflictSections) {
-          let conflict: Conflict = (<ConflictSection>conflictSection).conflict
+          let conflict: Conflict = conflictSection.conflict
           // LSP: filter symbols involved in each conflict block
           if (symbols !== undefined) {
             this.filterConflictingSymbols(conflict, symbols)
@@ -57,13 +57,13 @@ export class SoManyConflicts {
 
           console.log(conflictSection)
         }
-        conflictSectionsByFile.set(uri.fsPath, conflictSections)
+        sectionsByFile.set(uri.fsPath, conflictSections)
       }
     } catch (err) {
       window.showErrorMessage(err.message)
-      return conflictSectionsByFile
+      return sectionsByFile
     }
-    return conflictSectionsByFile
+    return sectionsByFile
   }
 
   private static extractConflictingIdentifiers(conflict: Conflict, language: Language) {
@@ -121,7 +121,7 @@ export class SoManyConflicts {
     return identifiers
   }
 
-  public static constructGraph(allConflictSections: ISection[]) {
+  public static constructGraph(allConflictSections: ConflictSection[]) {
     let graph = new graphlib.Graph({ directed: true, multigraph: true })
 
     // for each pair of conflicts
@@ -135,9 +135,9 @@ export class SoManyConflicts {
 
     // construct graph edges
     for (i = 0; i < allConflictSections.length; ++i) {
-      let conflict1: Conflict = (<ConflictSection>allConflictSections[i]).conflict
+      let conflict1: Conflict = allConflictSections[i].conflict
       for (j = i + 1; j < allConflictSections.length; ++j) {
-        let conflict2: Conflict = (<ConflictSection>allConflictSections[j]).conflict
+        let conflict2: Conflict = allConflictSections[j].conflict
         let dependency = AlgUtils.computeDependency(conflict1, conflict2)
         if (dependency > 0) {
           let lastWeight = graph.edge()
@@ -148,7 +148,7 @@ export class SoManyConflicts {
           }
         }
         let similarity = AlgUtils.computeSimilarity(conflict1, conflict2)
-        if(similarity > 0.5) {
+        if (similarity > 0.5) {
           graph.setEdge(i, j, similarity)
         }
       }
@@ -156,8 +156,8 @@ export class SoManyConflicts {
     return graph
   }
 
-  public static suggestStartingPoint(allConflictSections: ISection[], graph: any): ISection[][] {
-    let groupedConflictSections: ISection[][] = []
+  public static suggestStartingPoint(allConflictSections: ConflictSection[], graph: any): ConflictSection[][] {
+    let groupedConflictSections: ConflictSection[][] = []
     let components = graphlib.alg.components(graph)
     components.sort(function (a: [], b: []) {
       // ASC  -> a.length - b.length
@@ -166,7 +166,7 @@ export class SoManyConflicts {
     })
     for (let component of components) {
       if (component.length > 0) {
-        let sections: ISection[] = []
+        let sections: ConflictSection[] = []
         for (let element of component) {
           let index: number = +element
           sections.push(allConflictSections[index])
@@ -177,7 +177,7 @@ export class SoManyConflicts {
     return groupedConflictSections
   }
 
-  public static suggestResolutionStrategy(allConflictSections: ISection[], conflictIndex: number, graph: any) {
+  public static suggestResolutionStrategy(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {
     // find conflict section given index
 
     // pop stragies prob and get the first
@@ -186,7 +186,7 @@ export class SoManyConflicts {
     console.log('No suggestion.')
   }
 
-  public static suggestRelatedConflicts(allConflictSections: ISection[], conflictIndex: number, graph: any) {
+  public static suggestRelatedConflicts(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {
     let focusedConflict: Conflict = this.getConflictByIndex(allConflictSections, conflictIndex)
     let locations: Location[] = []
     let edges = graph.nodeEdges(conflictIndex)
@@ -214,8 +214,8 @@ export class SoManyConflicts {
     }
   }
 
-  private static getConflictByIndex(allConflictSections: ISection[], index: number): Conflict {
-    return (<ConflictSection>allConflictSections[index]).conflict
+  private static getConflictByIndex(allConflictSections: ConflictSection[], index: number): Conflict {
+    return allConflictSections[index].conflict
   }
 
   private static async filterConflictingSymbols(conflict: Conflict, symbols: DocumentSymbol[]) {

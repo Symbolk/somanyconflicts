@@ -18,9 +18,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   let message: string = ''
   // raw conflict blocks
-  let allConflictSections: ISection[] = []
+  let allConflictSections: ConflictSection[] = []
   // map from uri: ISection[]
   let conflictSectionsByFile = new Map<string, ISection[]>()
+  // TODO: make use of TextSection around ConflictSection for more information
+  // let sectionsByFile = new Map<string, ISection[]>()
   // let conflictSectionsByFile: { [key: string]: ISection[] } = {}
   let graph: typeof Graph | undefined = undefined
 
@@ -50,14 +52,17 @@ export function activate(context: vscode.ExtensionContext) {
               if (conflictSections) {
                 for (let change of event.contentChanges) {
                   for (let section of conflictSections) {
-                    let conflictSection = <ConflictSection>section
-                    let conflict = conflictSection.conflict
-                    if (change.range.contains(conflict.range)) {
-                      // check whether the conflict is resolved
-                      // compare text line by line to update the strategy prob
-                      conflictSection.checkStrategy(change.text)
-                      return
-                      // TODO: check if resolved
+                    if (section instanceof ConflictSection) {
+                      let conflictSection = <ConflictSection>section
+                      let conflict = conflictSection.conflict
+                      if (change.range.contains(conflict.range)) {
+                        // check whether the conflict is resolved
+                        // compare text line by line to update the strategy prob
+                        conflictSection.checkStrategy(change.text)
+                        // check if resolved and propagate to others
+                        propagateStrategy(conflictSection)
+                        return
+                      }
                     }
                   }
                 }
@@ -86,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
             console.log('User canceled the scanning.')
           })
 
-          let groupedConflictSections: ISection[][] = SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
+          let groupedConflictSections: ConflictSection[][] = SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
           suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then((res) => {
             suggestedConflictTreeViewProvider.refresh()
             vscode.commands.executeCommand('suggestedConflictTreeView.focus')
@@ -131,8 +136,6 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await vscode.commands.executeCommand('somanyconflicts.scan')
       }
-      // TODO: record resolution strategy of conflicts
-
       // locate the focusing conflict and start from it
       // query previously resolved related conflicts
       // suggest resolution strategy accordingly
@@ -171,7 +174,9 @@ export function activate(context: vscode.ExtensionContext) {
 
           for (let sections of conflictSectionsByFile.values()) {
             for (let section of sections) {
-              allConflictSections.push(section)
+              if (section instanceof ConflictSection) {
+                allConflictSections.push(<ConflictSection>section)
+              }
             }
           }
           if (allConflictSections.length == 0) {
@@ -200,27 +205,28 @@ export function activate(context: vscode.ExtensionContext) {
     // return allConflictSections
   }
 
+  function propagateStrategy(section: ConflictSection) {
+    // locate in the graph
+    // find and update connected nodes with DFS/BFS
+  }
+
   function findSelectedConflictIndex(args: any[]): number {
     if (args[0] === 'current-conflict') {
       let invokedConflict: Conflict = args[1]
       // match the conflict and get its index
       for (let i in allConflictSections) {
-        if (allConflictSections[i] instanceof ConflictSection) {
-          let conflict = (<ConflictSection>allConflictSections[i]).conflict
-          if (conflict.uri?.path == invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
-            return +i
-          }
+        let conflict = allConflictSections[i].conflict
+        if (conflict.uri?.path == invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
+          return +i
         }
       }
     } else {
       // attempt to find a conflict that matches the current cursor position
       if (vscode.window.activeTextEditor) {
         for (let i in allConflictSections) {
-          if (allConflictSections[i] instanceof ConflictSection) {
-            let conflict = (<ConflictSection>allConflictSections[i]).conflict
-            if (conflict.range.contains(vscode.window.activeTextEditor.selection.active)) {
-              return +i
-            }
+          let conflict = allConflictSections[i].conflict
+          if (conflict.range.contains(vscode.window.activeTextEditor.selection.active)) {
+            return +i
           }
         }
       }

@@ -58,47 +58,43 @@ export class ConflictTreeItem {
   ) {}
 }
 
-export async function conflictSectionsToTreeItem(allConflictSections: ISection[], parents: ConflictTreeItem[]) {
-  for (let section of allConflictSections) {
-    if (section instanceof ConflictSection) {
-      let doc = await vscode.workspace.openTextDocument(section.conflict.uri!)
-      let conflict = (<ConflictSection>section).conflict
-      let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
-      let range = new vscode.Range(start, conflict.range.end)
-      let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
-      let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
-      let flag = false
-      for (let parent of parents) {
-        if (newConflict.uri == parent.uri) {
-          parent.children.push(newConflict)
-          flag = true
-          break
-        }
+export async function conflictSectionsToTreeItem(allConflictSections: ConflictSection[], parents: ConflictTreeItem[]) {
+  for (let conflictSection of allConflictSections) {
+    let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
+    let conflict = conflictSection.conflict
+    let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
+    let range = new vscode.Range(start, conflict.range.end)
+    let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
+    let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
+    let flag = false
+    for (let parent of parents) {
+      if (newConflict.uri == parent.uri) {
+        parent.children.push(newConflict)
+        flag = true
+        break
       }
-      if (!flag) {
-        let newParent = new ConflictTreeItem(undefined, conflict.uri, undefined, [newConflict], vscode.TreeItemCollapsibleState.Expanded)
-        parents.push(newParent)
-      }
+    }
+    if (!flag) {
+      let newParent = new ConflictTreeItem(undefined, conflict.uri, undefined, [newConflict], vscode.TreeItemCollapsibleState.Expanded)
+      parents.push(newParent)
     }
   }
   return parents
 }
 
-export async function suggestionsToTreeItem(suggestions: ISection[][], parents: ConflictTreeItem[]) {
+export async function suggestionsToTreeItem(suggestions: ConflictSection[][], parents: ConflictTreeItem[]) {
   let idx = 0
   for (let group of suggestions) {
     idx++
     let groupRoot = new ConflictTreeItem('Group' + idx, undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded)
-    for (let section of group) {
-      if (section instanceof ConflictSection) {
-        let doc = await vscode.workspace.openTextDocument(section.conflict.uri!)
-        let conflict = (<ConflictSection>section).conflict
-        let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
-        let range = new vscode.Range(start, conflict.range.end)
-        let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
-        let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
-        groupRoot.children.push(newConflict)
-      }
+    for (let conflictSection of group) {
+      let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
+      let conflict = conflictSection.conflict
+      let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
+      let range = new vscode.Range(start, conflict.range.end)
+      let label = '(' + (conflict.range.start.line + 1) + '-' + (conflict.range.end.line + 1) + ')' + doc.getText(range).trimLeft()
+      let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
+      groupRoot.children.push(newConflict)
     }
     parents.push(groupRoot)
   }
