@@ -33,6 +33,56 @@ export function activate(context: vscode.ExtensionContext) {
   let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView')
   let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView')
 
+  const decorationType: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
+    // borderWidth: '1px',
+    // borderStyle: 'dashed',
+    backgroundColor: { id: 'somanyconflicts.background_color' },
+    gutterIconSize: 'contain',
+    gutterIconPath: context.asAbsolutePath('media/right.png'),
+    isWholeLine: true,
+    // light: {
+    //    borderColor: { id: 'somanyconflicts.border_color' },
+    //   backgroundColor: 'lightgreen',
+    //   // gutterIconPath: context.asAbsolutePath('media/hand-right-light.png'),
+    // },
+    // dark: {
+    //   borderColor: 'yellow',
+    //   backgroundColor: 'darkgreen',
+    //   // gutterIconPath: context.asAbsolutePath('media/hand-right-dark.png'),
+    // },
+  })
+
+  // check if the change edits a conflict section
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    if (event.contentChanges.length > 0) {
+      // currently support well for code lens resolution, may contain bugs for manual edit
+      if (conflictSectionsByFile.has(event.document.uri.fsPath)) {
+        let conflictSections = conflictSectionsByFile.get(event.document.uri.fsPath)
+        if (conflictSections && conflictSections.length > 0) {
+          for (let change of event.contentChanges) {
+            for (let section of conflictSections) {
+              if (section instanceof ConflictSection) {
+                let conflictSection = <ConflictSection>section
+                let conflict = conflictSection.conflict
+                if (change.range.contains(conflict.range)) {
+                  // check whether the conflict is resolved
+                  // compare text line by line to update the strategy prob
+                  conflictSection.checkStrategy(change.text)
+                  console.log('Manually resolved: ' + conflictSection.index + ' via ' + conflictSection.stragegy.display)
+                  // check if resolved and propagate to others
+                  propagateStrategy(conflictSection)
+                  // FIXME: update conflict ranges
+                  vscode.commands.executeCommand('somanyconflicts.scan')
+                  return
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
   // init: scan all conflicts in the current workspace
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
@@ -48,40 +98,12 @@ export function activate(context: vscode.ExtensionContext) {
           allConflictTreeViewProvider.refresh()
           vscode.commands.executeCommand('allConflictTreeView.focus')
         })
-
-        // check if the change edits a conflict section
-        vscode.workspace.onDidChangeTextDocument((event) => {
-          if (event.contentChanges.length > 0) {
-            // currently support well for code lens resolution, may contain bugs for manual edit
-            if (conflictSectionsByFile.has(event.document.uri.fsPath)) {
-              let conflictSections = conflictSectionsByFile.get(event.document.uri.fsPath)
-              if (conflictSections) {
-                for (let change of event.contentChanges) {
-                  for (let section of conflictSections) {
-                    if (section instanceof ConflictSection) {
-                      let conflictSection = <ConflictSection>section
-                      let conflict = conflictSection.conflict
-                      if (change.range.contains(conflict.range)) {
-                        // check whether the conflict is resolved
-                        // compare text line by line to update the strategy prob
-                        conflictSection.checkStrategy(change.text)
-                        console.log('Manually resolved: ' + conflictSection.index + ' via ' + conflictSection.stragegy.display)
-                        // check if resolved and propagate to others
-                        propagateStrategy(conflictSection)
-                        return
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        })
       }
     })
   )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
+  // TODO: call when activated
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
@@ -132,6 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
   )
 
   // feature3: recommend resolution strategy given conflict resolved before
+  // TODO: automatically call for related and jump?
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.how', async (...args: any[]) => {
       let conflictIndex: number = findSelectedConflictIndex(args)
@@ -146,7 +169,7 @@ export function activate(context: vscode.ExtensionContext) {
       // locate the focusing conflict and start from it
       // query previously resolved related conflicts
       // suggest resolution strategy accordingly
-      SoManyConflicts.suggestResolutionStrategy(allConflictSections, conflictIndex, graph)
+      SoManyConflicts.suggestResolutionStrategy(allConflictSections, conflictIndex, decorationType)
     })
   )
 
@@ -246,7 +269,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
       }
     }
-    // TODO: consider direction, find and update connected nodes with DFS/BFS
+    // TODO: consider def-use direction, find and update connected nodes with DFS/BFS
   }
 
   function findSelectedConflictIndex(args: any[]): number {

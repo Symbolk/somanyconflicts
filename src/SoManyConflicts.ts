@@ -1,4 +1,4 @@
-import { window, TextEditor, Uri, Range, Location, Position, commands, DocumentSymbol } from 'vscode'
+import { window, TextEditor, Uri, Range, Location, Position, commands, DocumentSymbol, DecorationOptions, TextEditorDecorationType } from 'vscode'
 import { Parser } from './Parser'
 import { ISection } from './ISection'
 import { ConflictSection } from './ConflictSection'
@@ -11,6 +11,7 @@ import * as TreeSitter from 'tree-sitter'
 import { Identifier } from './Identifier'
 import { Constants } from './Constants'
 import { Language } from './Language'
+import { getStrategy, Strategy } from './Strategy'
 // import { Point, SyntaxNode, Tree, Query, QueryMatch, QueryCapture } from 'tree-sitter'
 // const JavaScript = require('tree-sitter-javascript')
 const TypeScript = require('tree-sitter-typescript').typescript
@@ -83,6 +84,7 @@ export class SoManyConflicts {
     //     }
     //   }
     // )
+    // TODO: should use set?
     let identifiers: Identifier[] = []
     let queryString = ''
     switch (language) {
@@ -122,34 +124,36 @@ export class SoManyConflicts {
   }
 
   public static constructGraph(allConflictSections: ConflictSection[]) {
-    let graph = new graphlib.Graph({ directed: true, multigraph: true })
+    // let graph = new graphlib.Graph({ directed: true, multigraph: true })
+    let graph = new graphlib.Graph({ multigraph: true })
+
+    // construct graph nodes
+    for (let conflictSection of allConflictSections) {
+      graph.setNode(conflictSection.index, { file_path: conflictSection.conflict.uri?.fsPath, range: conflictSection.getLineRange() })
+    }
 
     // for each pair of conflicts
     let i,
       j: number = 0
-
-    // construct graph nodes
-    for (i = 0; i < allConflictSections.length; ++i) {
-      graph.setNode(i, { label: i })
-    }
-
     // construct graph edges
     for (i = 0; i < allConflictSections.length; ++i) {
       let conflict1: Conflict = allConflictSections[i].conflict
+      let index1 = allConflictSections[i].index
       for (j = i + 1; j < allConflictSections.length; ++j) {
         let conflict2: Conflict = allConflictSections[j].conflict
+        let index2 = allConflictSections[j].index
         let dependency = AlgUtils.computeDependency(conflict1, conflict2)
         if (dependency > 0) {
-          let lastWeight = graph.edge()
+          let lastWeight = graph.edge(index1, index2)
           if (lastWeight == undefined) {
-            graph.setEdge(i, j, dependency)
+            graph.setEdge(index1, index2, dependency)
           } else {
-            graph.setEdge(i, j, lastWeight + dependency)
+            graph.setEdge(index1, index2, lastWeight + dependency)
           }
         }
         let similarity = AlgUtils.computeSimilarity(conflict1, conflict2)
         if (similarity > 0.5) {
-          graph.setEdge(i, j, similarity)
+          graph.setEdge(index1, index2, similarity)
         }
       }
     }
@@ -177,13 +181,22 @@ export class SoManyConflicts {
     return groupedConflictSections
   }
 
-  public static suggestResolutionStrategy(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {
-    // find conflict section given index
+  public static suggestResolutionStrategy(allConflictSections: ConflictSection[], conflictIndex: number, decorationType: TextEditorDecorationType) {
+    let activeEditor = window.activeTextEditor
+    if (!activeEditor) {
+      return
+    }
 
-    // pop stragies prob and get the first
-
-    // show with code lens or highlighted line ranges
-    console.log('No suggestion.')
+    let focused: ConflictSection = this.getConflictSectionByIndex(allConflictSections, conflictIndex)
+    let suggestedStrategy: Strategy = getStrategy(focused.strategiesProb)
+    // if (suggestedStrategy != Strategy.Unknown) {
+      // OR: show with code lens or highlighted line ranges
+      const decorationOptions: DecorationOptions[] = []
+      // decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + focused.stragegy.display })
+      decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to Accept Current Change' })
+      activeEditor.setDecorations(decorationType, decorationOptions)
+      // FIXME: remove decorations after accepted
+    // }
   }
 
   public static suggestRelatedConflicts(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {
@@ -216,6 +229,10 @@ export class SoManyConflicts {
 
   private static getConflictByIndex(allConflictSections: ConflictSection[], index: number): Conflict {
     return allConflictSections[index].conflict
+  }
+
+  public static getConflictSectionByIndex(allConflictSections: ConflictSection[], index: number): ConflictSection {
+    return allConflictSections[index]
   }
 
   private static async filterConflictingSymbols(conflict: Conflict, symbols: DocumentSymbol[]) {

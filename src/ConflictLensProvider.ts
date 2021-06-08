@@ -1,26 +1,18 @@
-import {
-  CodeLensProvider,
-  TextDocument,
-  CodeLens,
-  CancellationToken,
-  Range,
-  Position,
-  Command,
-  workspace,
-} from 'vscode'
+import { CodeLensProvider, TextDocument, CodeLens, CancellationToken, Range, Position, Command, workspace } from 'vscode'
 import { ConflictSection } from './ConflictSection'
 import { Parser } from './Parser'
+import { getStrategy, Strategy } from './Strategy'
 
 export class ConflictLensProvider implements CodeLensProvider {
   public provideCodeLenses(
     document: TextDocument,
+
     token: CancellationToken
   ): CodeLens[] | Thenable<CodeLens[]> {
     let codeLenses: CodeLens[] = []
-    let conflictSections: ConflictSection[] = Parser.parse(
-      document.uri,
-      document.getText()
-    ).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
+    let conflictSections: ConflictSection[] = Parser.parse(document.uri, document.getText()).filter(
+      (sec) => sec instanceof ConflictSection
+    ) as ConflictSection[]
     const conflictsCount = conflictSections?.length ?? 0
 
     if (!conflictsCount) {
@@ -34,14 +26,15 @@ export class ConflictLensProvider implements CodeLensProvider {
         title: 'Show Related Conflicts',
         arguments: ['current-conflict', conflictSection.conflict],
       }
+      let range: Range = conflictSection.conflict.range
+      codeLenses.push(new CodeLens(range, nextCommand))
+
       let strategyCommand: Command = {
         command: 'somanyconflicts.how',
-        title: 'Recommend Resolution',
+        title: 'Recommend Resolution Strategy',
         arguments: ['current-conflict', conflictSection.conflict],
       }
 
-      let range: Range = conflictSection.conflict.range
-      codeLenses.push(new CodeLens(range, nextCommand))
       codeLenses.push(new CodeLens(range, strategyCommand))
       // codeLenses.push(
       //   new CodeLens(
