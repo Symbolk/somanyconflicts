@@ -37,6 +37,9 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
       allConflictSections.length = 0
+      conflictSectionsByFile = new Map<string, ISection[]>()
+      graph = undefined
+
       await init()
       if (allConflictSections.length == 0) {
         vscode.window.showWarningMessage('Found no merge conflicts in the current workspace!')
