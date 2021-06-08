@@ -59,6 +59,7 @@ export class ConflictTreeItem {
 }
 
 export async function conflictSectionsToTreeItem(allConflictSections: ConflictSection[], parents: ConflictTreeItem[]) {
+  parents.length = 0
   for (let conflictSection of allConflictSections) {
     let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
     let conflict = conflictSection.conflict
@@ -84,6 +85,7 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
 
 export async function suggestionsToTreeItem(suggestions: ConflictSection[][], parents: ConflictTreeItem[]) {
   let idx = 0
+  parents.length = 0
   for (let group of suggestions) {
     idx++
     let groupRoot = new ConflictTreeItem('Group' + idx, undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded)
