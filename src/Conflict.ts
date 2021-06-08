@@ -1,7 +1,6 @@
 'use strict'
 
-import { Uri } from 'vscode'
-import { Position, Range } from 'vscode'
+import { Uri, Position, Range } from 'vscode'
 import { ConflictSide } from './ConflictSide'
 import { Constants } from './Constants'
 import { Symbol } from './Symbol'

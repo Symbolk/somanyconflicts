@@ -4,7 +4,6 @@ import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider,
 import * as vscode from 'vscode'
 import { Conflict } from './Conflict'
 import { ConflictLensProvider } from './ConflictLensProvider'
-import { ISection } from './ISection'
 import { SoManyConflicts } from './SoManyConflicts'
 import { ConflictSection } from './ConflictSection'
 var Graph = require('@dagrejs/graphlib').Graph
@@ -22,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   // raw conflict blocks
   let allConflictSections: ConflictSection[] = []
   // map from uri: ISection[]
-  let conflictSectionsByFile = new Map<string, ISection[]>()
+  let conflictSectionsByFile = new Map<string, ConflictSection[]>()
   // TODO: make use of TextSection around ConflictSection for more information
   // let sectionsByFile = new Map<string, ISection[]>()
   // let conflictSectionsByFile: { [key: string]: ISection[] } = {}
@@ -63,23 +62,20 @@ export function activate(context: vscode.ExtensionContext) {
         let conflictSections = conflictSectionsByFile.get(fsPath)
         if (conflictSections && conflictSections.length > 0) {
           for (let change of event.contentChanges) {
-            for (let section of conflictSections) {
-              if (section instanceof ConflictSection) {
-                let conflictSection = <ConflictSection>section
-                let conflict = conflictSection.conflict
-                if (change.range.contains(conflict.range)) {
-                  // check whether the conflict is resolved
-                  // compare text line by line to update the strategy prob
-                  conflictSection.checkStrategy(change.text)
-                  console.log(
-                    'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
-                  )
-                  // TODO: only propagate to others if fully resolved
-                  // TODO: check behavior of Cmd+Z
-                  propagateStrategy(conflictSection)
-                  await updateRanges(fsPath)
-                  return
-                }
+            for (let conflictSection of conflictSections) {
+              let conflict = conflictSection.conflict
+              if (change.range.contains(conflict.range)) {
+                // check whether the conflict is resolved
+                // compare text line by line to update the strategy prob
+                conflictSection.checkStrategy(change.text)
+                console.log(
+                  'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
+                )
+                // TODO: only propagate to others if fully resolved
+                // TODO: check behavior of Cmd+Z
+                propagateStrategy(conflictSection)
+                await updateRanges(fsPath, conflictSections)
+                return
               }
             }
           }
@@ -88,7 +84,29 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  async function updateRanges(fsPath: string) {
+  async function updateRanges(fsPath: string, oldConflictSections: ConflictSection[]) {
+    // let newSections: ConflictSection[] = SoManyConflicts.scanConflictsInFile(fsPath) // latent for auto-saving
+    let newSections: ConflictSection[] = []
+
+    if (vscode.window.activeTextEditor) {
+      newSections = SoManyConflicts.scanConflictsInFile(fsPath, vscode.window.activeTextEditor.document.getText())
+    } else {
+      newSections = SoManyConflicts.scanConflictsInFile(fsPath)
+    }
+
+    if (newSections.length > 0) {
+      let cnt: number = 0
+      for (let i = 0; i < oldConflictSections.length; ++i) {
+        if (oldConflictSections[i].hasResolved) {
+          cnt += 1
+        } else {
+          if (i - cnt >= 0 && i - cnt < newSections.length) {
+            oldConflictSections[i].updateRange(newSections[i - cnt].conflict.range)
+          }
+        }
+      }
+    }
+
     conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
       allConflictTreeViewProvider.refresh()
     })
@@ -99,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
       allConflictSections.length = 0
-      conflictSectionsByFile = new Map<string, ISection[]>()
+      conflictSectionsByFile = new Map<string, ConflictSection[]>()
       graph = undefined
 
       await init()
@@ -192,8 +210,8 @@ export function activate(context: vscode.ExtensionContext) {
 
   async function init(): Promise<any> {
     if (vscode.workspace.workspaceFolders !== undefined) {
-      let workspace = vscode.workspace.workspaceFolders[0].uri.path
-      // let currentFile = vscode.workspace.workspaceFolders[0].uri.fsPath ;
+      // let workspace = vscode.workspace.workspaceFolders[0].uri.path
+      let workspace = vscode.workspace.workspaceFolders[0].uri.fsPath
 
       return vscode.window.withProgress(
         {
@@ -215,13 +233,11 @@ export function activate(context: vscode.ExtensionContext) {
           conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(workspace)
 
           let i: number = 0
-          for (let sections of conflictSectionsByFile.values()) {
-            for (let section of sections) {
-              if (section instanceof ConflictSection) {
-                section.index = i.toString()
-                allConflictSections.push(<ConflictSection>section)
-                i += 1
-              }
+          for (let conflictSections of conflictSectionsByFile.values()) {
+            for (let section of conflictSections) {
+              section.index = i.toString()
+              allConflictSections.push(<ConflictSection>section)
+              i += 1
             }
           }
           if (allConflictSections.length == 0) {

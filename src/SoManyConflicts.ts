@@ -19,9 +19,20 @@ const treeSitter = new TreeSitter()
 treeSitter.setLanguage(TypeScript)
 
 export class SoManyConflicts {
-  public static async scanAllConflicts(workspace: string): Promise<Map<string, ISection[]>> {
+  public static scanConflictsInFile(absPath: string, content?: string): ConflictSection[] {
+    if (!content) {
+      content = FileUtils.readFileContent(absPath)
+    }
+    let uri: Uri = Uri.file(absPath)
+    const conflictSections: ConflictSection[] = Parser.parse(uri, content).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
+    conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
+
+    return conflictSections
+  }
+
+  public static async scanAllConflicts(workspace: string): Promise<Map<string, ConflictSection[]>> {
     let message: string = ''
-    let sectionsByFile = new Map<string, ISection[]>()
+    let sectionsByFile = new Map<string, ConflictSection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
@@ -34,12 +45,9 @@ export class SoManyConflicts {
       for (const absPath of filePaths) {
         console.log('Start parsing ' + absPath)
         // scan and parse all conflict blocks
-        let content: string = FileUtils.readFileContent(absPath)
+        const conflictSections: ConflictSection[] = this.scanConflictsInFile(absPath)
         let uri: Uri = Uri.file(absPath)
         let language: Language = FileUtils.detectLanguage(absPath)
-
-        const sections: ISection[] = Parser.parse(uri, content)
-        const conflictSections: ConflictSection[] = sections.filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
 
         // extract identifiers in the whole file
         /* P.S. actually the symbol provider is quite unreliable
@@ -55,8 +63,6 @@ export class SoManyConflicts {
           }
           // AST: extract identifiers (def/use) to complement LSP results
           this.extractConflictingIdentifiers(conflict, language)
-
-          console.log(conflictSection.printLineRange())
         }
         sectionsByFile.set(uri.fsPath, conflictSections)
       }
@@ -189,14 +195,13 @@ export class SoManyConflicts {
 
     let focused: ConflictSection = this.getConflictSectionByIndex(allConflictSections, conflictIndex)
     let suggestedStrategy: Strategy = getStrategy(focused.strategiesProb)
-    // if (suggestedStrategy != Strategy.Unknown) {
-      // OR: show with code lens or highlighted line ranges
+    if (suggestedStrategy != Strategy.Unknown) {
       const decorationOptions: DecorationOptions[] = []
-      // decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + focused.stragegy.display })
-      decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to Accept Current Change' })
+      decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + focused.stragegy.display })
+      // decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to Accept Current Change' })
       activeEditor.setDecorations(decorationType, decorationOptions)
       // FIXME: remove decorations after accepted
-    // }
+    }
   }
 
   public static suggestRelatedConflicts(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {

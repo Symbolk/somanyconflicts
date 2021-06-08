@@ -42,6 +42,11 @@ export class FileUtils {
     return readFileSync(absPath, 'utf-8')
   }
 
+  /**
+   * Get the absolute path of conflicting files
+   * @param directory 
+   * @returns 
+   */
   public static async getConflictingFilePaths(
     directory: string
   ): Promise<string[]> {

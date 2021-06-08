@@ -4,10 +4,10 @@ import { AlgUtils } from './AlgUtils'
 import { Conflict } from './Conflict'
 import { ISection } from './ISection'
 import { Strategy } from './Strategy'
+import { Range } from 'vscode'
 
 export class ConflictSection implements ISection {
-  // readonly data stored in conflict itself
-  private readonly _conflict: Conflict
+  private _conflict: Conflict
   private _index: string = ''
   public get index(): string {
     return this._index
@@ -117,6 +117,7 @@ export class ConflictSection implements ISection {
   }
 
   public updateStrategy(probs: Array<number>, weight: number): Array<number> {
+    // avg (prob*weight) + self.prob
     let newProbs = probs.map((p) => p * weight)
     for (let i in newProbs) {
       this._strategiesProb[i] += newProbs[i]
@@ -138,5 +139,10 @@ export class ConflictSection implements ISection {
 
   public printLineRange(): string {
     return '(' + (this._conflict.range.start.line + 1) + '-' + (this._conflict.range.end.line + 1) + ')'
+  }
+
+  public updateRange(range: Range) {
+    this._conflict.range = range
+    this._conflict.computeRanges(range.start.line, range.end.line)
   }
 }
