@@ -56,7 +56,7 @@ export class SoManyConflicts {
           // AST: extract identifiers (def/use) to complement LSP results
           this.extractConflictingIdentifiers(conflict, language)
 
-          console.log(conflictSection)
+          console.log(conflictSection.printLineRange())
         }
         sectionsByFile.set(uri.fsPath, conflictSections)
       }
@@ -129,7 +129,7 @@ export class SoManyConflicts {
 
     // construct graph nodes
     for (let conflictSection of allConflictSections) {
-      graph.setNode(conflictSection.index, { file_path: conflictSection.conflict.uri?.fsPath, range: conflictSection.getLineRange() })
+      graph.setNode(conflictSection.index, { file_path: conflictSection.conflict.uri?.fsPath, range: conflictSection.printLineRange() })
     }
 
     // for each pair of conflicts

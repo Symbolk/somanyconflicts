@@ -27,11 +27,13 @@ export function activate(context: vscode.ExtensionContext) {
   // let sectionsByFile = new Map<string, ISection[]>()
   // let conflictSectionsByFile: { [key: string]: ISection[] } = {}
   let graph: typeof Graph | undefined = undefined
+  let conflictIconPath: string = context.asAbsolutePath('media/alert.png')
+  let resolvedIconPath: string = context.asAbsolutePath('media/right.png')
 
   addSubcommandOpenFile(context)
 
-  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView')
-  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView')
+  let [suggestedConflictTreeRoot, suggestedConflictTreeViewProvider] = createTree('suggestedConflictTreeView', conflictIconPath, resolvedIconPath)
+  let [allConflictTreeRoot, allConflictTreeViewProvider] = createTree('allConflictTreeView', conflictIconPath, resolvedIconPath)
 
   const decorationType: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
     // borderWidth: '1px',
@@ -53,11 +55,12 @@ export function activate(context: vscode.ExtensionContext) {
   })
 
   // check if the change edits a conflict section
-  vscode.workspace.onDidChangeTextDocument((event) => {
+  vscode.workspace.onDidChangeTextDocument(async (event) => {
     if (event.contentChanges.length > 0) {
       // currently support well for code lens resolution, may contain bugs for manual edit
-      if (conflictSectionsByFile.has(event.document.uri.fsPath)) {
-        let conflictSections = conflictSectionsByFile.get(event.document.uri.fsPath)
+      let fsPath = event.document.uri.fsPath
+      if (conflictSectionsByFile.has(fsPath)) {
+        let conflictSections = conflictSectionsByFile.get(fsPath)
         if (conflictSections && conflictSections.length > 0) {
           for (let change of event.contentChanges) {
             for (let section of conflictSections) {
@@ -68,11 +71,13 @@ export function activate(context: vscode.ExtensionContext) {
                   // check whether the conflict is resolved
                   // compare text line by line to update the strategy prob
                   conflictSection.checkStrategy(change.text)
-                  console.log('Manually resolved: ' + conflictSection.index + ' via ' + conflictSection.stragegy.display)
-                  // check if resolved and propagate to others
+                  console.log(
+                    'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
+                  )
+                  // TODO: only propagate to others if fully resolved
+                  // TODO: check behavior of Cmd+Z
                   propagateStrategy(conflictSection)
-                  // FIXME: update conflict ranges
-                  vscode.commands.executeCommand('somanyconflicts.scan')
+                  await updateRanges(fsPath)
                   return
                 }
               }
@@ -82,6 +87,13 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
   })
+
+  async function updateRanges(fsPath: string) {
+    conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
+      allConflictTreeViewProvider.refresh()
+    })
+    await vscode.commands.executeCommand('somanyconflicts.start')
+  }
 
   // init: scan all conflicts in the current workspace
   context.subscriptions.push(
@@ -314,9 +326,9 @@ function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand(commandsToOpenFiles, openFileHandler))
 }
 
-function createTree(viewName: string): [ConflictTreeItem[], ConflictTreeViewProvider] {
+function createTree(viewName: string, resolvedIconPath: string, conflictIconPath: string): [ConflictTreeItem[], ConflictTreeViewProvider] {
   let treeRoot: ConflictTreeItem[] = []
-  const treeViewProvider = new ConflictTreeViewProvider(treeRoot)
+  const treeViewProvider = new ConflictTreeViewProvider(treeRoot, resolvedIconPath, conflictIconPath)
   vscode.window.registerTreeDataProvider(viewName, treeViewProvider)
   return [treeRoot, treeViewProvider]
 }

@@ -3,7 +3,7 @@ import { ISection } from './ISection'
 import * as vscode from 'vscode'
 
 export class ConflictTreeViewProvider implements vscode.TreeDataProvider<ConflictTreeItem> {
-  constructor(private conflict: ConflictTreeItem[]) {
+  constructor(private conflict: ConflictTreeItem[], private conflictIconPath: string, private resolvedIconPath: string) {
     // console.log("conflict", conflict)
   }
   getTreeItem(item: ConflictTreeItem): vscode.TreeItem {
@@ -17,6 +17,7 @@ export class ConflictTreeViewProvider implements vscode.TreeDataProvider<Conflic
           arguments: [item.uri, item.range],
         },
         collapsibleState: vscode.TreeItemCollapsibleState.None,
+        iconPath: item.state == -1 ? this.conflictIconPath : this.resolvedIconPath,
       }
     } else if (item.uri) {
       return {
@@ -54,7 +55,8 @@ export class ConflictTreeItem {
     public uri: vscode.Uri | undefined,
     public range: vscode.Range | undefined,
     public children: Array<ConflictTreeItem>,
-    public collapsibleState: vscode.TreeItemCollapsibleState
+    public collapsibleState: vscode.TreeItemCollapsibleState,
+    public state: number // -1=conflicting, 1=resolved, 0=default
   ) {}
 }
 
@@ -65,8 +67,8 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
     let conflict = conflictSection.conflict
     let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
     let range = new vscode.Range(start, conflict.range.end)
-    let label = conflictSection.getLineRange() + ' ' + doc.getText(range).trimLeft()
-    let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
+    let label = conflictSection.printLineRange() + ' ' + doc.getText(range).trimLeft()
+    let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None, conflictSection.hasResolved ? 1 : -1)
     let flag = false
     for (let parent of parents) {
       if (newConflict.uri == parent.uri) {
@@ -76,7 +78,7 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
       }
     }
     if (!flag) {
-      let newParent = new ConflictTreeItem(undefined, conflict.uri, undefined, [newConflict], vscode.TreeItemCollapsibleState.Expanded)
+      let newParent = new ConflictTreeItem(undefined, conflict.uri, undefined, [newConflict], vscode.TreeItemCollapsibleState.Expanded, 0)
       parents.push(newParent)
     }
   }
@@ -88,14 +90,21 @@ export async function suggestionsToTreeItem(suggestions: ConflictSection[][], pa
   parents.length = 0
   for (let group of suggestions) {
     idx++
-    let groupRoot = new ConflictTreeItem('Group' + idx, undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded)
+    let groupRoot = new ConflictTreeItem('Group' + idx, undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded, 0)
     for (let conflictSection of group) {
       let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
       let conflict = conflictSection.conflict
       let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
       let range = new vscode.Range(start, conflict.range.end)
-      let label = conflictSection.getLineRange() + ' ' + doc.getText(range).trimLeft()
-      let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None)
+      let label = conflictSection.printLineRange() + ' ' + doc.getText(range).trimLeft()
+      let newConflict = new ConflictTreeItem(
+        label,
+        conflict.uri,
+        conflict.range,
+        [],
+        vscode.TreeItemCollapsibleState.None,
+        conflictSection.hasResolved ? 1 : -1
+      )
       groupRoot.children.push(newConflict)
     }
     parents.push(groupRoot)
