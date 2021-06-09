@@ -1,8 +1,15 @@
-# So Many Conflicts
+<div align="center">
+  <a href="" target="_blank">
+    <img width="160" src="https://github.com/Symbolk/somanyconflicts/blob/main/media/logo.png" alt="logo">
+  </a>
+  <h1 id="somanyconflicts"><a href="https://github.com/Symbolk/somanyconflicts/" target="repo">So Many Conflicts</a></h1>
+
+</div>
 
 **A VSCode extension to resolve many conflicts interactively and systematically, to boost developer’s efficiency and conflicts resolution quality**.
 
-> Under tense development, to be published in marketplace when ready.
+![screen](/media/screenshot.png?raw=true "screen")
+
 
 ## Features
 
@@ -53,7 +60,7 @@
 - If you find that electron takes too much time to install when running `yarn`, stop it with `Command+C` and remove `"electron": "12.0.4"` from `package.json` first, then run the following command to install modules:
 ```sh
 yarn
-ELECTRON_MIRROR=http://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.0.4
+ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12.0.4
 ```
 
 - Treesitter is a native module that must be rebuilt locally after installed to match the electron node version of VSCode (see [electron-rebuild]). However, directly running rebuild will result in an error about C++ version. There is an unmerged [PR] and a related [issue] for [node-tree-sitter], for now you need to follow these steps to successfully rebuild it:

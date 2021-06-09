@@ -2,7 +2,8 @@
   "name": "somanyconflicts",
   "displayName": "So Many Conflicts",
   "description": "No more headache on multiple conflicts after merging!",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "icon": "media/logo.png",
   "publisher": "Symbolk",
   "repository": {
     "type": "git",
@@ -14,6 +15,13 @@
   "categories": [
     "Other"
   ],
+  "keywords": [
+		"git",
+    "branch",
+		"merge",
+		"conflict",
+		"resolve"
+	],
   "activationEvents": [
     "onCommand:somanyconflicts.scan",
     "onCommand:somanyconflicts.start",
@@ -22,6 +30,26 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "colors": [
+      {
+        "id": "somanyconflicts.border_color",
+        "description": "Background color for suggested resolution",
+        "defaults": {
+          "dark": "#FFFF00",
+          "light": "#FF4500",
+          "highContrast": "#FF000055"
+        }
+      },
+      {
+        "id": "somanyconflicts.background_color",
+        "description": "Background color for suggested resolution",
+        "defaults": {
+          "dark": "#006400",
+          "light": "#90EE90",
+          "highContrast": "#FF000055"
+        }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
