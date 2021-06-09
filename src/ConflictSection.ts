@@ -71,7 +71,7 @@ export class ConflictSection implements ISection {
     lines = lines.filter((line) => line.trim().length > 0)
     if (lines.length == 0) {
       this._hasResolved = true
-      this._strategiesProb[4] = 1.0
+      this._strategiesProb[5] = 1.0
       this._stragegy = Strategy.AcceptNone
       return
     }
@@ -84,7 +84,7 @@ export class ConflictSection implements ISection {
     if (simi == 1.0) {
       this._resolvedCode = newText
       this._hasResolved = true
-      this._strategiesProb[0] = 1.0
+      this._strategiesProb[1] = 1.0
       this._stragegy = Strategy.AcceptOurs
       return
     } else {
@@ -94,7 +94,7 @@ export class ConflictSection implements ISection {
       if (simi == 1.0) {
         this._resolvedCode = newText
         this._hasResolved = true
-        this._strategiesProb[1] = 1.0
+        this._strategiesProb[2] = 1.0
         this._stragegy = Strategy.AcceptTheirs
         return
       } else {
@@ -104,7 +104,7 @@ export class ConflictSection implements ISection {
         if (simi == 1.0) {
           this._resolvedCode = newText
           this._hasResolved = true
-          this._strategiesProb[2] = 1.0
+          this._strategiesProb[3] = 1.0
           this._stragegy = Strategy.AcceptBase
           return
         } else {
@@ -114,7 +114,7 @@ export class ConflictSection implements ISection {
           if (simi == 1.0) {
             this._resolvedCode = newText
             this._hasResolved = true
-            this._strategiesProb[3] = 1.0
+            this._strategiesProb[4] = 1.0
             this._stragegy = Strategy.AcceptBoth
             return
           } else {
