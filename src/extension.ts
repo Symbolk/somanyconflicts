@@ -90,6 +90,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     if (vscode.window.activeTextEditor) {
       newSections = SoManyConflicts.scanConflictsInFile(fsPath, vscode.window.activeTextEditor.document.getText())
+      // remove decoration after resolved
+      vscode.window.activeTextEditor.setDecorations(decorationType, [])
     } else {
       newSections = SoManyConflicts.scanConflictsInFile(fsPath)
     }

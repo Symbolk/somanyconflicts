@@ -199,7 +199,8 @@ export class SoManyConflicts {
       decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + focused.stragegy.display })
       // decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to Accept Current Change' })
       activeEditor.setDecorations(decorationType, decorationOptions)
-      // FIXME: remove decorations after accepted
+    } else {
+      vscode.window.showWarningMessage('No suggestion for this conflict.')
     }
   }
 
