@@ -12,7 +12,7 @@ import { Queue } from 'queue-typescript'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "somanyconflicts" is now active!')
@@ -118,10 +118,6 @@ export function activate(context: vscode.ExtensionContext) {
   // init: scan all conflicts in the current workspace
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
-      allConflictSections.length = 0
-      conflictSectionsByFile = new Map<string, ConflictSection[]>()
-      graph = undefined
-
       await init()
       if (allConflictSections.length == 0) {
         vscode.window.showWarningMessage('Found no merge conflicts in the current workspace!')
@@ -135,7 +131,6 @@ export function activate(context: vscode.ExtensionContext) {
   )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
-  // TODO: call when activated
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
@@ -211,6 +206,10 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   async function init(): Promise<any> {
+    allConflictSections.length = 0
+    conflictSectionsByFile = new Map<string, ConflictSection[]>()
+    graph = undefined
+
     if (vscode.workspace.workspaceFolders !== undefined) {
       // let workspace = vscode.workspace.workspaceFolders[0].uri.path
       let workspace = vscode.workspace.workspaceFolders[0].uri.fsPath
@@ -326,7 +325,12 @@ export function activate(context: vscode.ExtensionContext) {
     }
     return -1
   }
+
+  await init()
+  await conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot)
+  allConflictTreeViewProvider.refresh()
 }
+
 // this method is called when your extension is deactivated
 export function deactivate() {}
 
