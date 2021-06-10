@@ -92,3 +92,14 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 > Conflicts parsing part is borrowed from [Conflict Squeezer], thanks for the nice work!
 
 [Conflict Squeezer]: https://github.com/angelo-mollame/conflict-squeezer
+
+## Development
+
+> Recommend to develop under macOS/Linux, since SoManyConflicts relies on node-tree-sitter (node binding of a C++ native module tree-sitter), and the node-gyp&windows-build-tools is a even more terrible nightmare under Windows!
+
+### Requirements
+- Node.JS ^14.16.0
+- Yarn ^1.16.0
+- VSCode ^1.56.0
+
+> 
