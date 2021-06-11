@@ -57,14 +57,6 @@ export class ConflictSection implements ISection {
     this._stragegy = value
   }
 
-  private linesToText(lines: string[]): string[] {
-    if (lines.length > 0) {
-      return [lines.reduce((pre, cur) => { return pre + cur })]
-    } else {
-      return ['']
-    }
-  }
-
   public checkStrategy(newText: string) {
     // compare the new text with each side and combination to check the strategy (trimmed line by line)
     let lines: string[] = newText.split(/\r\n|\r|\n/)
@@ -77,7 +69,7 @@ export class ConflictSection implements ISection {
     }
     let similarities: number[] = []
 
-    let ourText: string[] = this.linesToText(this.conflict.ours.lines)
+    let ourText: string[] = [this.conflict.ours.lines.join('')]
     let theirText: string[], baseText: string[]
 
     let simi = AlgUtils.compareLineByLine([newText], ourText)
@@ -89,7 +81,7 @@ export class ConflictSection implements ISection {
       return
     } else {
       similarities.push(simi)
-      theirText = this.linesToText(this.conflict.theirs.lines)
+      theirText = [this.conflict.theirs.lines.join('')]
       simi = AlgUtils.compareLineByLine([newText], theirText)
       if (simi == 1.0) {
         this._resolvedCode = newText
@@ -99,7 +91,7 @@ export class ConflictSection implements ISection {
         return
       } else {
         similarities.push(simi)
-        baseText = this.linesToText(this.conflict.base.lines)
+        baseText = [this.conflict.base.lines.join('')]
         simi = AlgUtils.compareLineByLine([newText], baseText)
         if (simi == 1.0) {
           this._resolvedCode = newText

@@ -4,19 +4,16 @@ import simpleGit, {
   StatusResult,
 } from 'simple-git'
 import {
-  readdir,
   readdirSync,
   readFile,
   readFileSync,
-  stat,
   statSync,
+  promises as fs,
 } from 'fs'
 import path = require('path')
 import util = require('util')
 import { Constants } from './Constants'
 import { Language } from './Language'
-const readdirPromise = util.promisify(readdir)
-const statPromise = util.promisify(stat)
 
 export class FileUtils {
   public static detectLanguage(path: string): Language {
@@ -112,13 +109,13 @@ export class FileUtils {
   private static async listFilePaths(directory: string) {
     let fileList: string[] = []
 
-    const files = await readdirPromise(directory)
+    const files = await fs.readdir(directory)
     for (const file of files) {
       if (file.startsWith('.')) {
         continue
       }
       const absPath = path.join(directory, file)
-      if ((await statPromise(absPath)).isDirectory()) {
+      if ((await fs.stat(absPath)).isDirectory()) {
         fileList = [...fileList, ...(await this.listFilePaths(absPath))]
       } else {
         fileList.push(absPath)
