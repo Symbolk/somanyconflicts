@@ -210,62 +210,62 @@ export function activate(context: vscode.ExtensionContext) {
     return allConflictSections.length != 0 && graph && graph !== undefined
   }
 
+  async function scanConflictsInFolder(folder: vscode.WorkspaceFolder) {
+    conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
+
+    for (let conflictSections of conflictSectionsByFile.values()) {
+      for (let section of conflictSections) {
+        section.index = allConflictSections.length.toString()
+        allConflictSections.push(section)
+      }
+    }
+  }
+
   async function init(): Promise<any> {
-    if (vscode.workspace.workspaceFolders !== undefined) {
-      // let workspace = vscode.workspace.workspaceFolders[0].uri.path
-      let workspace = vscode.workspace.workspaceFolders[0].uri.fsPath
-
-      return vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: 'Scanning so many conflicts in your workspace...',
-          cancellable: true,
-        },
-        async (progress, token) => {
-          token.onCancellationRequested(() => {
-            console.log('User canceled the scanning.')
-          })
-
-          // progress.report({ increment: 0 })
-
-          // setTimeout(() => {
-          //   progress.report({ increment: 10 })
-          // }, 1000)
-
-          conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(workspace)
-
-          let i: number = 0
-          for (let conflictSections of conflictSectionsByFile.values()) {
-            for (let section of conflictSections) {
-              section.index = i.toString()
-              allConflictSections.push(<ConflictSection>section)
-              i += 1
-            }
-          }
-          if (allConflictSections.length == 0) {
-            message = 'Found no merge conflicts in the current workspace!'
-            vscode.window.showWarningMessage(message)
-            return
-          } else {
-            // construct a graph to keep relations of conflicts
-            graph = SoManyConflicts.constructGraph(allConflictSections)
-            if (graph == undefined) {
-              message = 'Failed to construct the graph for conflicts.'
-              vscode.window.showErrorMessage(message)
-              return
-            }
-          }
-          message = 'Found ' + allConflictSections.length + ' conflicts in total in the current workspace.'
-          vscode.window.showInformationMessage(message)
-          progress.report({ increment: 100 })
-        }
-      )
-    } else {
+    const { workspaceFolders } = vscode.workspace
+    if (!workspaceFolders) {
       message = 'Please open a workspace with merge conflicts first.'
       vscode.window.showWarningMessage(message)
       return
     }
-    // return allConflictSections
+
+    return vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Scanning so many conflicts in your workspace...',
+        cancellable: true,
+      },
+      async (progress, token) => {
+        token.onCancellationRequested(() => {
+          console.log('User canceled the scanning.')
+        })
+
+        // progress.report({ increment: 0 })
+
+        // setTimeout(() => {
+        //   progress.report({ increment: 10 })
+        // }, 1000)
+
+        await Promise.all(workspaceFolders.map(scanConflictsInFolder))
+
+        if (allConflictSections.length == 0) {
+          message = 'Found no merge conflicts in the current workspace!'
+          vscode.window.showWarningMessage(message)
+          return
+        } else {
+          // construct a graph to keep relations of conflicts
+          graph = SoManyConflicts.constructGraph(allConflictSections)
+          if (graph == undefined) {
+            message = 'Failed to construct the graph for conflicts.'
+            vscode.window.showErrorMessage(message)
+            return
+          }
+        }
+        message = 'Found ' + allConflictSections.length + ' conflicts in total in the current workspace.'
+        vscode.window.showInformationMessage(message)
+        progress.report({ increment: 100 })
+      }
+    )
   }
 
   function propagateStrategy(section: ConflictSection) {
