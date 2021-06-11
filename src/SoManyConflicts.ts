@@ -196,9 +196,26 @@ export class SoManyConflicts {
     let suggestedStrategy: Strategy = getStrategy(focused.strategiesProb)
     if (suggestedStrategy != Strategy.Unknown) {
       const decorationOptions: vscode.DecorationOptions[] = []
-      decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + focused.stragegy.display })
-      // decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to Accept Current Change' })
-      activeEditor.setDecorations(decorationType, decorationOptions)
+      switch (suggestedStrategy) {
+        case Strategy.AcceptOurs:
+          decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + suggestedStrategy.display })
+          break
+        case Strategy.AcceptTheirs:
+          decorationOptions.push({ range: focused.conflict.theirs.range, hoverMessage: 'Suggest to ' + suggestedStrategy.display })
+          break
+        case Strategy.AcceptBase:
+          decorationOptions.push({ range: focused.conflict.base.range, hoverMessage: 'Suggest to ' + suggestedStrategy.display })
+          break
+        case Strategy.AcceptBoth:
+          decorationOptions.push({ range: focused.conflict.ours.range, hoverMessage: 'Suggest to ' + suggestedStrategy.display })
+          decorationOptions.push({ range: focused.conflict.theirs.range, hoverMessage: 'Suggest to ' + suggestedStrategy.display })
+          break
+      }
+      if (decorationOptions.length > 0) {
+        activeEditor.setDecorations(decorationType, decorationOptions)
+      } else {
+        vscode.window.showInformationMessage('Suggest to ' + suggestedStrategy.display)
+      }
     } else {
       vscode.window.showWarningMessage('No suggestion for this conflict.')
     }
