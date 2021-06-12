@@ -23,6 +23,7 @@ export class ConflictTreeViewProvider implements vscode.TreeDataProvider<Conflic
       return {
         resourceUri: item.uri,
         collapsibleState: vscode.TreeItemCollapsibleState.Expanded,
+        iconPath: vscode.ThemeIcon.File
       }
     } else if (item.label) {
       return new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.Expanded)
