@@ -6,7 +6,7 @@
 
 </div>
 
-**A VSCode extension to resolve many conflicts interactively and systematically, to boost developer’s efficiency and conflicts resolution quality**.
+**A VSCode extension to help developers resolve so many merge conflicts interactively and systematically, to lighten this tedious work and avoid making mistakes**.
 
 ![screen](/media/screenshot.png?raw=true "screen")
 
@@ -19,23 +19,23 @@
 
 ## Language Support
 
+- Java
 - JavaScript
 - TypeScript
-- Java
-- Python
+- Python (doing)
 
 ## Requirements
 
 - Install latest VSCode of course.
-- Search&Install SoManyConflict in VSCode extension marketplace.
+- Search&Install `SoManyConflict` in the extension marketplace.
 
 ## Quick Start
 
 1. Open a Git repository with unresolved merge conflicts in VSCode.
-2. Invoke command `somany`.
+2. Invoke command `somany` or click the button in the side bar.
 3. Start resolving from the recommended starting point conflict block.
-4. Jump to the suggested subsequent conflict block to resolve.
-5. After all conflicts resolved, go on committing the changed files.
+4. Navigate and jump to the suggested subsequent conflict block to resolve by hand.
+5. After all conflicts resolved, go on committing the resolved files.
 
 ## Develop
 
@@ -99,7 +99,7 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 
 ### Requirements
 - Node.JS ^14.16.0
-- Yarn ^1.16.0
+- (optional) Yarn ^1.16.0
 - VSCode ^1.56.0
 
-> 
+### Instructions
