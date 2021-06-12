@@ -9,6 +9,7 @@ import { ConflictSection } from './ConflictSection'
 var Graph = require('@dagrejs/graphlib').Graph
 const graphlib = require('@dagrejs/graphlib')
 import { Queue } from 'queue-typescript'
+import { MutexUtils } from './MutexUtils'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -20,6 +21,8 @@ export function activate(context: vscode.ExtensionContext) {
   let message: string = ''
   // raw conflict blocks
   let allConflictSections: ConflictSection[] = []
+  // mutex lock
+  const conflictSectionLock = new MutexUtils()
   // map from uri: ISection[]
   let conflictSectionsByFile = new Map<string, ConflictSection[]>()
   // TODO: make use of TextSection around ConflictSection for more information
@@ -121,14 +124,17 @@ export function activate(context: vscode.ExtensionContext) {
       allConflictSections.length = 0
       conflictSectionsByFile = new Map<string, ConflictSection[]>()
       graph = undefined
-
-      await init()
+      if (!isReady()) {
+        await init()
+      }
       if (allConflictSections.length == 0) {
         vscode.window.showWarningMessage('Found no merge conflicts in the current workspace!')
       } else {
-        conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
-          allConflictTreeViewProvider.refresh()
-          vscode.commands.executeCommand('allConflictTreeView.focus')
+        conflictSectionLock.dispatch(async () => {
+          await conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
+            allConflictTreeViewProvider.refresh()
+            vscode.commands.executeCommand('allConflictTreeView.focus')
+          })
         })
       }
     })
@@ -153,9 +159,11 @@ export function activate(context: vscode.ExtensionContext) {
           })
 
           let groupedConflictSections: ConflictSection[][] = SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
-          suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then((res) => {
-            suggestedConflictTreeViewProvider.refresh()
-            vscode.commands.executeCommand('suggestedConflictTreeView.focus')
+          conflictSectionLock.dispatch(async () => {
+            await suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then((res) => {
+              suggestedConflictTreeViewProvider.refresh()
+              vscode.commands.executeCommand('suggestedConflictTreeView.focus')
+            })
           })
           progress.report({ increment: 100 })
         }
@@ -211,14 +219,18 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   async function scanConflictsInFolder(folder: vscode.WorkspaceFolder) {
-    conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
+    await conflictSectionLock.dispatch(async () => {
+      if (allConflictSections.length == 0) {
+        conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
 
-    for (let conflictSections of conflictSectionsByFile.values()) {
-      for (let section of conflictSections) {
-        section.index = allConflictSections.length.toString()
-        allConflictSections.push(section)
+        for (let conflictSections of conflictSectionsByFile.values()) {
+          for (let section of conflictSections) {
+            section.index = allConflictSections.length.toString()
+            allConflictSections.push(section)
+          }
+        }
       }
-    }
+    })
   }
 
   async function init(): Promise<any> {
@@ -328,7 +340,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 }
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }
 
 function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   const commandsToOpenFiles = 'somanyconflicts.openFileAt'
