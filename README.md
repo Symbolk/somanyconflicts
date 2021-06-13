@@ -26,7 +26,14 @@
 
 ## Requirements
 
-- Install latest VSCode of course.
+- macOS
+- VSCode ^1.56.0
+
+> Linux/Windows not supported yet, see Known Issues below
+
+## Installation
+
+- Install the latest VSCode of course.
 - Search&Install `SoManyConflict` in the extension marketplace.
 
 ## Quick Start
@@ -38,6 +45,16 @@
 5. After all conflicts resolved, go on committing the resolved files.
 
 ## Develop
+
+> Recommend to develop under macOS/Linux, since SoManyConflicts relies on node-tree-sitter (node binding of a C++ native module tree-sitter), and the node-gyp&windows-build-tools is a terrible nightmare under Windows!
+
+### Requirements
+
+- Node.JS ^14.16.0
+- (optional) Yarn ^1.16.0
+- VSCode ^1.56.0
+
+### Instructions
 
 1. Clone repo and open in VSCode.
 2. Run `yarn` to download dependencies.
@@ -86,20 +103,12 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 ```
 
 > Note that, unfortunately, each time you run yarn, you need to rebuild treesitter as above :-(
-> 
+
+
+- "Fail to activate extension" or "Command not found" under Windows: Since SoManyConflicts relies on a native module TreeSitter written in C/C++, it has to be rebuilt under different OS before use. We are figuring out how to make it easier to install.
+
 <center> <strong>Enjoy!</strong> </center>
 
 > Conflicts parsing part is borrowed from [Conflict Squeezer], thanks for the nice work!
 
 [Conflict Squeezer]: https://github.com/angelo-mollame/conflict-squeezer
-
-## Development
-
-> Recommend to develop under macOS/Linux, since SoManyConflicts relies on node-tree-sitter (node binding of a C++ native module tree-sitter), and the node-gyp&windows-build-tools is a even more terrible nightmare under Windows!
-
-### Requirements
-- Node.JS ^14.16.0
-- (optional) Yarn ^1.16.0
-- VSCode ^1.56.0
-
-### Instructions
