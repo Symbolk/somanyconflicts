@@ -20,21 +20,22 @@
 ## Language Support
 
 - Java
-- JavaScript
 - TypeScript
+- JavaScript (testing)
 - Python (doing)
 
 ## Requirements
 
-- macOS
-- VSCode ^1.56.0
-
-> Linux/Windows not supported yet, see Known Issues below
-
+- OS: macOS ~10.15 (Recommended) or Windows 10
+- VSCode: ^1.56.0
+  
 ## Installation
 
 - Install the latest VSCode of course.
-- Search&Install `SoManyConflict` in the extension marketplace.
+- For macOS: Directly search&install `SoManyConflict` in the extension marketplace.
+- For Win10: Download the installation package `.vsix` in [release] and run `Extension: Install from VSIX...` in VSCode ot install.
+  
+[release]: https://github.com/Symbolk/somanyconflicts/releases
 
 ## Quick Start
 
@@ -50,18 +51,42 @@
 
 ### Requirements
 
+#### Under macOS (Recommended)
 - Node.JS ^14.16.0
 - (optional) Yarn ^1.16.0
 - VSCode ^1.56.0
 
+#### Under Windows
+- Node.JS ^14.16.0
+- VSCode ^1.56.0
+- Visual Studio Build Tools 2017
+
 ### Instructions
 
+#### Under macOS (Recommended)
+0. Install XCode command line tools:
+```sh
+xcode-select --install
+```
 1. Clone repo and open in VSCode.
 2. Run `yarn` to download dependencies.
-3. Press `F5` to run and debug extension.
-4. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
-5. Trick: When debugging, install the extension `Auto Run Command` and configure it in `Code-Preferences-Settings`, you can avoid manually invoke the command:
+3. Edit `node_modules/tree-sitter/binding.gyp`:
 
+```json
+      'xcode_settings': {
+-       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
++       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+      },
+```
+Rebuild tree-sitter with:
+
+```sh
+./node_modules/.bin/electron-rebuild
+```
+4. Press `F5` to run and debug extension.
+5. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
+
+> Trick: When debugging, install the extension `Auto Run Command` and configure it in `Code-Preferences-Settings`, you can avoid manually invoke the command:
 ```json
   "auto-run-command.rules": [
     {
@@ -71,6 +96,32 @@
     }
   ],
 ```
+
+#### Under Windows
+0. Install [windows-build-tools] with:
+```
+npm install --global windows-build-tools
+```
+[windows-build-tools]: https://www.npmjs.com/package/windows-build-tools
+
+1. Clone repo and open in VSCode.
+2. Run `npm i` to download dependencies.
+3. Edit `node_modules/tree-sitter/binding.gyp`:
+
+```json
+      'xcode_settings': {
+-       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
++       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+      },
+```
+Rebuild tree-sitter with:
+
+```sh
+.\node_modules\.bin\electron-rebuild
+```
+5. Press `F5` to run and debug extension.
+6. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
+
 
 ## Known Issues
 
@@ -105,7 +156,8 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 > Note that, unfortunately, each time you run yarn, you need to rebuild treesitter as above :-(
 
 
-- "Fail to activate extension" or "Command not found" under Windows: Since SoManyConflicts relies on a native module TreeSitter written in C/C++, it has to be rebuilt under different OS before use. We are figuring out how to make it easier to install.
+- "Fail to activate extension" or "Command not found" under Windows: Since SoManyConflicts relies on a native module TreeSitter written in C/C++, it has to be rebuilt under different OS before use, please follow the Developement#Under Windows for how to build it. We are figuring out how to make it easier to install.
+
 
 <center> <strong>Enjoy!</strong> </center>
 
