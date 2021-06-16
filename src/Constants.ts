@@ -11,6 +11,7 @@ export class Constants {
   (public_field_definition name: (property_identifier) @field-def)
   (labeled_statement label: (statement_identifier) @field-def)
   (function_declaration name: (identifier) @function-def)
+  (generator_function_declaration name: (identifier) @function-def)
   (method_definition name: (property_identifier) @method-def)
   (variable_declarator
     name: (identifier) @var-def
@@ -76,6 +77,7 @@ export class Constants {
     left: (identifier)? @var-ref
     right: (identifier)? @var-ref
   )
+  (yield_expression (identifier) @var-ref)
   (return_statement (identifier) @var-ref)
   `
 
