@@ -12,10 +12,15 @@ export class Constants {
   (labeled_statement label: (statement_identifier) @field-def)
   (function_declaration name: (identifier) @function-def)
   (method_definition name: (property_identifier) @method-def)
-  (variable_declarator 
-    name: [(identifier) @var-def
-    (array_pattern (identifier) @var-def)]
-    type: (type_annotation)? @type-ref)
+  (variable_declarator
+    name: (identifier) @var-def
+    type: (type_annotation)? @type-ref
+  )
+  (array_pattern (identifier) @var-def)
+  (object_pattern [
+    (pair_pattern value: (identifier) @var-def)
+    (shorthand_property_identifier_pattern) @var-def
+  ])
   (call_expression
     function: [
       (identifier) @function-ref
