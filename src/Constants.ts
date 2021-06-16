@@ -34,9 +34,10 @@ export class Constants {
   (array_type (type_identifier) @type-ref)
   (comment) @comment
   (for_in_statement right: (identifier) @var-ref)
-  (member_expression 
+  (member_expression
     object: (identifier) @var-ref
-    property: (property_identifier))
+    property: (property_identifier)
+  )
   (subscript_expression
     object: (identifier) @var-ref
     index: (identifier)? @var-ref
@@ -52,11 +53,21 @@ export class Constants {
     (tuple_type (type_identifier) @type-ref)])
   (arguments (identifier) @var-ref)
   (type_arguments (type_identifier) @type-ref)
-  (as_expression 
+  (as_expression
     (identifier)? @var-ref
-    (type_identifier)? @type-ref)
+    (type_identifier)? @type-ref
+  )
   (parenthesized_expression (identifier) @var-ref)
-  (assignment_expression 
+  (assignment_expression
+    left: (identifier)? @var-ref
+    right: (identifier)? @var-ref
+  )
+  (ternary_expression
+    condition: (identifier)? @var-ref
+    consequence: (identifier)? @var-ref
+    alternative: (identifier)? @var-ref
+  )
+  (sequence_expression
     left: (identifier)? @var-ref
     right: (identifier)? @var-ref
   )
@@ -71,7 +82,7 @@ export class Constants {
   (field_access field: (identifier) @field-ref)
   (method_declaration name: (identifier) @method-def)
   (method_invocation name: (identifier) @method-ref)
-  (local_variable_declaration type: (type_identifier) @type-ref 
+  (local_variable_declaration type: (type_identifier) @type-ref
   declarator: (variable_declarator name: (identifier)) @var-def)
   (object_creation_expression type: (type_identifier) @type-ref)
   (type_arguments (type_identifier) @type-ref)
