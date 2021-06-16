@@ -27,7 +27,6 @@ export class Constants {
   )
   (member_expression property: (property_identifier) @field-ref)
   (assignment_expression left:(identifier)@var-ref)
-  
   (new_expression
     constructor:(identifier)@type-ref
   )
@@ -64,7 +63,50 @@ export class Constants {
   (return_statement (identifier)@var-ref)
   `
 
-  public static javaScriptQuery: string = ''
+  public static javaScriptQuery: string = `
+  (class_declaration name: (identifier) @type-def)
+  (public_field_definition name: (property_identifier) @field-def)
+  (labeled_statement label: (statement_identifier) @field-def)
+  (function_declaration name: (identifier) @function-def)
+  (method_definition name: (property_identifier) @method-def)
+  (variable_declarator 
+    name: [(identifier) @var-def
+    (array_pattern (identifier) @var-def)]
+  (call_expression
+    function: [
+      (identifier) @function-ref
+      (member_expression
+        object: (identifier) @method-obj
+        property: (property_identifier) @method-ref)
+    ]
+    arguments: (arguments (identifier) @var-ref)*
+  )
+  (new_expression
+    constructor: (identifier) @type-ref
+  )
+  (member_expression property: (property_identifier) @field-ref)
+  (member_expression 
+    object: (identifier) @var-ref
+    property: (property_identifier))
+  (assignment_expression left: (identifier) @var-ref)
+  (assignment_expression 
+    left: (identifier)* @var-ref
+    right: (identifier)* @var-ref
+  )
+  (comment) @comment
+  (for_in_statement right: (identifier) @var-ref)
+  (subscript_expression
+    object: (identifier) @var-ref
+    index: (identifier)* @var-ref
+  )
+  (unary_expression argument: (identifier) @var-ref)
+  (binary_expression
+    left: (identifier)* @var-ref
+    right: (identifier)* @var-ref
+  )
+  (arguments (identifier) @var-ref)
+  (parenthesized_expression (identifier) @var-ref)
+  (return_statement (identifier) @var-ref)`
 
   public static javaQuery: string = `
   (class_declaration name: (identifier) @type-def)
