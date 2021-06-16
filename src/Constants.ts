@@ -15,7 +15,7 @@ export class Constants {
   (variable_declarator 
     name: [(identifier) @var-def
     (array_pattern (identifier) @var-def)]
-    type: (type_annotation)* @type-ref)
+    type: (type_annotation)? @type-ref)
   (call_expression
     function: [
       (identifier) @function-ref
@@ -23,45 +23,44 @@ export class Constants {
         object: [(identifier) (non_null_expression)] @method-obj
         property: (property_identifier) @method-ref)
     ]
-    arguments: (arguments (identifier)@var-ref)*
+    arguments: (arguments (identifier) @var-ref)*
   )
   (member_expression property: (property_identifier) @field-ref)
-  (assignment_expression left:(identifier)@var-ref)
-  
+  (assignment_expression left: (identifier) @var-ref)
   (new_expression
-    constructor:(identifier)@type-ref
+    constructor: (identifier) @type-ref
   )
-  (predefined_type)@type-ref
-  (array_type (type_identifier)@type-ref)
+  (predefined_type) @type-ref
+  (array_type (type_identifier) @type-ref)
   (comment) @comment
-  (for_in_statement right:(identifier)@var-ref)
+  (for_in_statement right: (identifier) @var-ref)
   (member_expression 
-    object:(identifier)@var-ref
-    property:(property_identifier))
+    object: (identifier) @var-ref
+    property: (property_identifier))
   (subscript_expression
-    object: (identifier)@var-ref
-    index: (identifier)*@var-ref
+    object: (identifier) @var-ref
+    index: (identifier)? @var-ref
   )
   (binary_expression
-    left:(identifier)*@var-ref
-    right:(identifier)*@var-ref
+    left: (identifier)? @var-ref
+    right: (identifier)? @var-ref
   )
-  (type_annotation (type_identifier)@type-ref)
-  (unary_expression argument:(identifier)@var-ref)
-  (type_alias_declaration name:(type_identifier)@type-def)
-  (type_annotation [(generic_type (type_identifier)@type-ref)
-    (tuple_type (type_identifier)@type-ref)])
-  (arguments (identifier)@var-ref)
-  (type_arguments (type_identifier)@type-ref)
+  (type_annotation (type_identifier) @type-ref)
+  (unary_expression argument: (identifier) @var-ref)
+  (type_alias_declaration name: (type_identifier) @type-def)
+  (type_annotation [(generic_type (type_identifier) @type-ref)
+    (tuple_type (type_identifier) @type-ref)])
+  (arguments (identifier) @var-ref)
+  (type_arguments (type_identifier) @type-ref)
   (as_expression 
-    (identifier)*@var-ref
-    (type_identifier)*@type-ref)
-  (parenthesized_expression (identifier)@var-ref)
+    (identifier)? @var-ref
+    (type_identifier)? @type-ref)
+  (parenthesized_expression (identifier) @var-ref)
   (assignment_expression 
-    left: (identifier)*@var-ref
-    right: (identifier)*@var-ref
+    left: (identifier)? @var-ref
+    right: (identifier)? @var-ref
   )
-  (return_statement (identifier)@var-ref)
+  (return_statement (identifier) @var-ref)
   `
 
   public static javaScriptQuery: string = ''
