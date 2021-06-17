@@ -10,6 +10,7 @@ export class Constants {
   (comment) @comment
   (class_declaration name: (type_identifier) @type-def)
   (type_alias_declaration name: (type_identifier) @type-def)
+  (interface_declaration name: (type_identifier) @type-def)
   (public_field_definition name: (property_identifier) @field-def)
   (labeled_statement label: (statement_identifier) @field-def)
   (function_declaration name: (identifier) @function-def)
@@ -25,6 +26,7 @@ export class Constants {
     (pair_pattern value: (identifier) @var-def)
     (shorthand_property_identifier_pattern) @var-def
   ])
+  (internal_module (identifier) @var-def)
   (call_expression
     function: [
       (identifier) @function-ref
