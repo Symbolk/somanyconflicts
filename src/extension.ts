@@ -1,3 +1,6 @@
+import { Parser } from './Parser';
+import { Constants } from './Constants';
+import { Strategy } from './Strategy';
 import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider, suggestionsToTreeItem } from './ConflictTreeView'
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -65,9 +68,17 @@ export function activate(context: vscode.ExtensionContext) {
         let conflictSections = conflictSectionsByFile.get(fsPath)
         if (conflictSections && conflictSections.length > 0) {
           for (let change of event.contentChanges) {
+            let changeLines = Parser.getLines(change.text)
             for (let conflictSection of conflictSections) {
               let conflict = conflictSection.conflict
-              if (change.range.contains(conflict.range)) {
+              if (change.range.contains(conflict.range) && change.text.includes(Constants.conflictMarkerOurs) &&
+                change.text.includes(Constants.conflictMarkerTheirs) && change.text.includes(Constants.conflictMarkerEnd)) {
+                reversePropagateStrategy(conflictSection)
+                conflictSection.hasResolved = false
+                conflictSection.stragegy = Strategy.Unknown
+                conflictSection.resolvedCode = ''
+                await updateRanges(fsPath, conflictSections, change, changeLines.length)
+              } else if (change.range.contains(conflict.range)) {
                 // check whether the conflict is resolved
                 // compare text line by line to update the strategy prob
                 conflictSection.checkStrategy(change.text)
@@ -76,8 +87,15 @@ export function activate(context: vscode.ExtensionContext) {
                 )
                 // TODO: only propagate to others if fully resolved
                 // TODO: check behavior of Cmd+Z
+                if (changeLines.length == 0) {
+                  conflictSection.updateRangeWithoutComputing(new vscode.Range(new vscode.Position(conflictSection.conflict.range.start.line, 0),
+                    new vscode.Position(conflictSection.conflict.range.start.line, 0)))
+                } else {
+                  conflictSection.updateRange(new vscode.Range(new vscode.Position(conflictSection.conflict.range.start.line, 0),
+                    new vscode.Position(conflictSection.conflict.range.start.line + changeLines.length - 1, 0)))
+                }
                 propagateStrategy(conflictSection)
-                await updateRanges(fsPath, conflictSections)
+                await updateRanges(fsPath, conflictSections, change, changeLines.length)
                 return
               }
             }
@@ -87,7 +105,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  async function updateRanges(fsPath: string, oldConflictSections: ConflictSection[]) {
+  async function updateRanges(fsPath: string, oldConflictSections: ConflictSection[], change: vscode.TextDocumentContentChangeEvent, afterChangeLinesCnt: number) {
     // let newSections: ConflictSection[] = SoManyConflicts.scanConflictsInFile(fsPath) // latent for auto-saving
     let newSections: ConflictSection[] = []
 
@@ -99,18 +117,24 @@ export function activate(context: vscode.ExtensionContext) {
       newSections = SoManyConflicts.scanConflictsInFile(fsPath)
     }
 
-    if (newSections.length > 0) {
-      let cnt: number = 0
-      for (let i = 0; i < oldConflictSections.length; ++i) {
-        if (oldConflictSections[i].hasResolved) {
-          cnt += 1
-        } else {
-          if (i - cnt >= 0 && i - cnt < newSections.length) {
-            oldConflictSections[i].updateRange(newSections[i - cnt].conflict.range)
-          }
+    // if (newSections.length > 0) {
+    let cnt: number = 0
+    let changeLinesCnt: number = change.range.end.line - change.range.start.line - afterChangeLinesCnt
+    for (let i = 0; i < oldConflictSections.length; ++i) {
+      if (oldConflictSections[i].hasResolved) {
+        cnt += 1
+        let start = oldConflictSections[i].conflict.range.start.line, char_s = oldConflictSections[i].conflict.range.start.character
+        let end = oldConflictSections[i].conflict.range.end.line, char_e = oldConflictSections[i].conflict.range.end.character
+        if (change.range.end.line < start) {
+          oldConflictSections[i].updateRange(new vscode.Range(new vscode.Position(start - changeLinesCnt, char_s), new vscode.Position(end - changeLinesCnt, char_e)))
+        }
+      } else {
+        if (i - cnt >= 0 && i - cnt < newSections.length) {
+          oldConflictSections[i].updateRange(newSections[i - cnt].conflict.range)
         }
       }
     }
+    // }
 
     conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
       allConflictTreeViewProvider.refresh()
@@ -285,6 +309,12 @@ export function activate(context: vscode.ExtensionContext) {
       return
     }
 
+    let strategiesProb: Array<number> = new Array<number>(6).fill(0)
+    if (section.hasResolved) {
+      strategiesProb[section.stragegy.index] = 1.0
+    } else {
+      strategiesProb = section.strategiesProb
+    }
     // save index
     let visited = new Set<string>()
     let queue = new Queue<string>()
@@ -299,12 +329,12 @@ export function activate(context: vscode.ExtensionContext) {
           for (let e of edges) {
             if (!visited.has(e.v)) {
               let conflictSection = allConflictSections[e.v]
-              let newProbs = conflictSection.updateStrategy(section.strategiesProb, graph.edge(e))
+              let newProbs = conflictSection.updateStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.v)
             }
             if (!visited.has(e.w)) {
               let conflictSection = allConflictSections[e.w]
-              let newProbs = conflictSection.updateStrategy(section.strategiesProb, graph.edge(e))
+              let newProbs = conflictSection.updateStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.w)
             }
           }
@@ -312,6 +342,45 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }
     // TODO: consider def-use direction, find and update connected nodes with DFS/BFS
+  }
+
+  function reversePropagateStrategy(section: ConflictSection) {
+    if (!graph || graph == undefined) {
+      return
+    }
+
+    let strategiesProb: Array<number> = new Array<number>(6).fill(0)
+    if (section.hasResolved) {
+      strategiesProb[section.stragegy.index] = 1.0
+    } else {
+      strategiesProb = section.strategiesProb
+    }
+    // save index
+    let visited = new Set<string>()
+    let queue = new Queue<string>()
+    queue.enqueue(section.index)
+    visited.add(section.index)
+    while (queue.length > 0) {
+      let temp = queue.dequeue()
+      if (temp) {
+        visited.add(temp)
+        let edges = graph.nodeEdges(temp)
+        if (edges && edges.length > 0) {
+          for (let e of edges) {
+            if (!visited.has(e.v)) {
+              let conflictSection = allConflictSections[e.v]
+              let newProbs = conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
+              queue.enqueue(e.v)
+            }
+            if (!visited.has(e.w)) {
+              let conflictSection = allConflictSections[e.w]
+              let newProbs = conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
+              queue.enqueue(e.w)
+            }
+          }
+        }
+      }
+    }
   }
 
   function findSelectedConflictIndex(args: any[]): number {

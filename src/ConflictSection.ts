@@ -41,7 +41,7 @@ export class ConflictSection implements ISection {
     this._resolvedCode = value
   }
   // update interactively as conflicts are resolved
-  private _strategiesProb: Array<number> = new Array<number>(6).fill(0)
+  private _strategiesProb: Array<number> = new Array<number>(6).fill(1 / 6)
   public get strategiesProb(): Array<number> {
     return this._strategiesProb
   }
@@ -63,7 +63,6 @@ export class ConflictSection implements ISection {
     lines = lines.filter((line) => line.trim().length > 0)
     if (lines.length == 0) {
       this._hasResolved = true
-      this._strategiesProb[5] = 1.0
       this._stragegy = Strategy.AcceptNone
       return
     }
@@ -76,7 +75,6 @@ export class ConflictSection implements ISection {
     if (simi == 1.0) {
       this._resolvedCode = newText
       this._hasResolved = true
-      this._strategiesProb[1] = 1.0
       this._stragegy = Strategy.AcceptOurs
       return
     } else {
@@ -86,7 +84,6 @@ export class ConflictSection implements ISection {
       if (simi == 1.0) {
         this._resolvedCode = newText
         this._hasResolved = true
-        this._strategiesProb[2] = 1.0
         this._stragegy = Strategy.AcceptTheirs
         return
       } else {
@@ -96,7 +93,6 @@ export class ConflictSection implements ISection {
         if (simi == 1.0) {
           this._resolvedCode = newText
           this._hasResolved = true
-          this._strategiesProb[3] = 1.0
           this._stragegy = Strategy.AcceptBase
           return
         } else {
@@ -106,7 +102,6 @@ export class ConflictSection implements ISection {
           if (simi == 1.0) {
             this._resolvedCode = newText
             this._hasResolved = true
-            this._strategiesProb[4] = 1.0
             this._stragegy = Strategy.AcceptBoth
             return
           } else {
@@ -117,10 +112,29 @@ export class ConflictSection implements ISection {
     }
     // if none match, save similarities
     let i = 0
-    for (let sim of similarities) {
-      this._strategiesProb[i] = sim
-      i += 1
+    let idx = similarities.reduce((maxIndex, x, i, arr) => (x.toFixed(4) > arr[maxIndex].toFixed(4) ? i : maxIndex), 0)
+    switch (idx) {
+      case (0): {
+        this._stragegy = Strategy.AcceptOurs
+        break
+      }
+      case (1): {
+        this._stragegy = Strategy.AcceptTheirs
+        break
+      }
+      case (2): {
+        this._stragegy = Strategy.AcceptBase
+        break
+      }
+      case (3): {
+        this._stragegy = Strategy.AcceptBoth
+        break
+      }
     }
+    // for (let sim of similarities) {
+    //   this._strategiesProb[i] = sim
+    //   i += 1
+    // }
     this._hasResolved = true
   }
 
@@ -134,7 +148,19 @@ export class ConflictSection implements ISection {
 
     if (sum != 0) {
       for (let i in this._strategiesProb) {
-        this._strategiesProb[i] = +(this._strategiesProb[i] / sum).toFixed(4)
+        this._strategiesProb[i] = +(this._strategiesProb[i] / sum)
+      }
+    }
+
+    return this._strategiesProb
+  }
+
+  public reverseUpdatedStrategy(probs: Array<number>, weight: number): Array<number> {
+    let newProbs = probs.map((p) => p * weight)
+    let sum = newProbs.reduce((a, b) => a + b, 0)
+    if (sum != 0) {
+      for (let i in this._strategiesProb) {
+        this._strategiesProb[i] = this._strategiesProb[i] * (1 + weight) - newProbs[i]
       }
     }
 
@@ -152,5 +178,9 @@ export class ConflictSection implements ISection {
   public updateRange(range: Range) {
     this._conflict.range = range
     this._conflict.computeRanges(range.start.line, range.end.line)
+  }
+
+  public updateRangeWithoutComputing(range: Range) {
+    this._conflict.range = range
   }
 }
