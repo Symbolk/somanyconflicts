@@ -72,7 +72,7 @@ xcode-select --install
 2. Run `yarn` to download dependencies.
 3. Edit `node_modules/tree-sitter/binding.gyp`:
 
-```json
+```diff
       'xcode_settings': {
 -       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
 +       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
@@ -108,7 +108,7 @@ npm install --global windows-build-tools
 2. Run `npm i` to download dependencies.
 3. Edit `node_modules/tree-sitter/binding.gyp`:
 
-```json
+```diff
       'xcode_settings': {
 -       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
 +       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
@@ -140,7 +140,7 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 
 1. Edit `node_modules/tree-sitter/binding.gyp`:
 
-```json
+```diff
       'xcode_settings': {
 -       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
 +       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
