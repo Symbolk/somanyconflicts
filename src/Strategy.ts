@@ -14,7 +14,7 @@ export const Strategy = {
 export type Strategy = typeof Strategy[keyof typeof Strategy]
 
 export function getStrategy(probs: Array<number>) {
-  let maxIndex = probs.reduce((iMax, x, i, arr) => (x > arr[iMax] ? i : iMax), 0)
+  let maxIndex = probs.reduce((iMax, x, i, arr) => (x.toFixed(4) > arr[iMax].toFixed(4) ? i : iMax), 0)
   let k: keyof typeof Strategy
   for (k in Strategy) {
     if (Strategy[k].index == maxIndex) {
