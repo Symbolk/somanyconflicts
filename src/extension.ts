@@ -1,6 +1,6 @@
-import { Parser } from './Parser';
-import { Constants } from './Constants';
-import { Strategy } from './Strategy';
+import { Parser } from './Parser'
+import { Constants } from './Constants'
+import { Strategy } from './Strategy'
 import { conflictSectionsToTreeItem, ConflictTreeItem, ConflictTreeViewProvider, suggestionsToTreeItem } from './ConflictTreeView'
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
@@ -67,36 +67,50 @@ export function activate(context: vscode.ExtensionContext) {
       if (conflictSectionsByFile.has(fsPath)) {
         let conflictSections = conflictSectionsByFile.get(fsPath)
         if (conflictSections && conflictSections.length > 0) {
+          // TODO: allow edit outside of conflicts
           for (let change of event.contentChanges) {
             let changeLines = Parser.getLines(change.text)
             for (let conflictSection of conflictSections) {
               let conflict = conflictSection.conflict
-              if (change.range.contains(conflict.range) && change.text.includes(Constants.conflictMarkerOurs) &&
-                change.text.includes(Constants.conflictMarkerTheirs) && change.text.includes(Constants.conflictMarkerEnd)) {
-                reversePropagateStrategy(conflictSection)
-                conflictSection.hasResolved = false
-                conflictSection.stragegy = Strategy.Unknown
-                conflictSection.resolvedCode = ''
-                await updateRanges(fsPath, conflictSections, change, changeLines.length)
-              } else if (change.range.contains(conflict.range)) {
-                // check whether the conflict is resolved
-                // compare text line by line to update the strategy prob
-                conflictSection.checkStrategy(change.text)
-                console.log(
-                  'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
-                )
-                // TODO: only propagate to others if fully resolved
-                // TODO: check behavior of Cmd+Z
-                if (changeLines.length == 0) {
-                  conflictSection.updateRangeWithoutComputing(new vscode.Range(new vscode.Position(conflictSection.conflict.range.start.line, 0),
-                    new vscode.Position(conflictSection.conflict.range.start.line, 0)))
+              if (change.range.contains(conflict.range)) {
+                if (
+                  change.text.includes(Constants.conflictMarkerOurs) &&
+                  change.text.includes(Constants.conflictMarkerTheirs) &&
+                  change.text.includes(Constants.conflictMarkerEnd)
+                ) {
+                  // undo operation detected
+                  reversePropagateStrategy(conflictSection)
+                  conflictSection.hasResolved = false
+                  conflictSection.stragegy = Strategy.Unknown
+                  conflictSection.resolvedCode = ''
+                  await updateRanges(fsPath, conflictSections, change, changeLines.length)
                 } else {
-                  conflictSection.updateRange(new vscode.Range(new vscode.Position(conflictSection.conflict.range.start.line, 0),
-                    new vscode.Position(conflictSection.conflict.range.start.line + changeLines.length - 1, 0)))
+                  // resolved operation detected
+                  // compare text line by line to update the strategy prob
+                  conflictSection.checkStrategy(change.text)
+                  console.log(
+                    'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
+                  )
+                  // TODO: only propagate to others if fully resolved
+                  if (changeLines.length == 0) {
+                    conflictSection.updateRangeWithoutComputing(
+                      new vscode.Range(
+                        new vscode.Position(conflictSection.conflict.range.start.line, 0),
+                        new vscode.Position(conflictSection.conflict.range.start.line, 0)
+                      )
+                    )
+                  } else {
+                    conflictSection.updateRange(
+                      new vscode.Range(
+                        new vscode.Position(conflictSection.conflict.range.start.line, 0),
+                        new vscode.Position(conflictSection.conflict.range.start.line + changeLines.length - 1, 0)
+                      )
+                    )
+                  }
+                  propagateStrategy(conflictSection)
+                  await updateRanges(fsPath, conflictSections, change, changeLines.length)
+                  return
                 }
-                propagateStrategy(conflictSection)
-                await updateRanges(fsPath, conflictSections, change, changeLines.length)
-                return
               }
             }
           }
@@ -105,7 +119,12 @@ export function activate(context: vscode.ExtensionContext) {
     }
   })
 
-  async function updateRanges(fsPath: string, oldConflictSections: ConflictSection[], change: vscode.TextDocumentContentChangeEvent, afterChangeLinesCnt: number) {
+  async function updateRanges(
+    fsPath: string,
+    oldConflictSections: ConflictSection[],
+    change: vscode.TextDocumentContentChangeEvent,
+    afterChangeLinesCnt: number
+  ) {
     // let newSections: ConflictSection[] = SoManyConflicts.scanConflictsInFile(fsPath) // latent for auto-saving
     let newSections: ConflictSection[] = []
 
@@ -123,10 +142,14 @@ export function activate(context: vscode.ExtensionContext) {
     for (let i = 0; i < oldConflictSections.length; ++i) {
       if (oldConflictSections[i].hasResolved) {
         cnt += 1
-        let start = oldConflictSections[i].conflict.range.start.line, char_s = oldConflictSections[i].conflict.range.start.character
-        let end = oldConflictSections[i].conflict.range.end.line, char_e = oldConflictSections[i].conflict.range.end.character
+        let start = oldConflictSections[i].conflict.range.start.line,
+          char_s = oldConflictSections[i].conflict.range.start.character
+        let end = oldConflictSections[i].conflict.range.end.line,
+          char_e = oldConflictSections[i].conflict.range.end.character
         if (change.range.end.line < start) {
-          oldConflictSections[i].updateRange(new vscode.Range(new vscode.Position(start - changeLinesCnt, char_s), new vscode.Position(end - changeLinesCnt, char_e)))
+          oldConflictSections[i].updateRange(
+            new vscode.Range(new vscode.Position(start - changeLinesCnt, char_s), new vscode.Position(end - changeLinesCnt, char_e))
+          )
         }
       } else {
         if (i - cnt >= 0 && i - cnt < newSections.length) {
@@ -409,7 +432,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 }
 // this method is called when your extension is deactivated
-export function deactivate() { }
+export function deactivate() {}
 
 function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   const commandsToOpenFiles = 'somanyconflicts.openFileAt'
