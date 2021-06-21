@@ -26,7 +26,7 @@ export class FileUtils {
       case 'js':
         return Language.JavaScript
       case 'ts':
-      case 'tsx':
+      // case 'tsx':
         return Language.TypeScript
       case 'py':
         return Language.Python
