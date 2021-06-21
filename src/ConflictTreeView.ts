@@ -73,6 +73,9 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
     let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
     let conflict = conflictSection.conflict
     let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
+    if(conflictSection.hasResolved){
+      start = new vscode.Position(conflict.range.start.line, conflict.range.start.character)
+    }
     let range = new vscode.Range(start, conflict.range.end)
     let label = conflictSection.printLineRange() + ' ' + doc.getText(range).trimLeft()
     let newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None, conflictSection.hasResolved ? ConflictTreeItemState.resolved : ConflictTreeItemState.conflicting)
@@ -102,6 +105,9 @@ export async function suggestionsToTreeItem(suggestions: ConflictSection[][], pa
       let doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
       let conflict = conflictSection.conflict
       let start = new vscode.Position(conflict.range.start.line + 1, conflict.range.start.character)
+      if(conflictSection.hasResolved){
+        start = new vscode.Position(conflict.range.start.line, conflict.range.start.character)
+      }
       let range = new vscode.Range(start, conflict.range.end)
       let label = conflictSection.printLineRange() + ' ' + doc.getText(range).trimLeft()
       let newConflict = new ConflictTreeItem(
