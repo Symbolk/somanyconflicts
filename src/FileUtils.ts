@@ -20,18 +20,18 @@ export class FileUtils {
     let extension: string | undefined = path.split('.').pop()
     switch (extension) {
       case undefined:
-        return Language.Other
+        return 'Unknown'
       case 'java':
-        return Language.Java
+        return 'Java'
       case 'js':
-        return Language.JavaScript
+        return 'JavaScript'
       case 'ts':
       // case 'tsx':
-        return Language.TypeScript
+        return 'TypeScript'
       case 'py':
-        return Language.Python
+        return 'Python'
       default:
-        return Language.Other
+        return 'Unknown'
     }
   }
 

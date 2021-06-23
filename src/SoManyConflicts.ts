@@ -8,13 +8,12 @@ import { AlgUtils } from './AlgUtils'
 const graphlib = require('@dagrejs/graphlib')
 import * as TreeSitter from 'tree-sitter'
 import { Identifier } from './Identifier'
-import { Constants } from './Constants'
-import { Language } from './Language'
+import { Language, languages } from './Language'
 import { getStrategy, Strategy } from './Strategy'
+
 export class SoManyConflicts {
-  // singleton treesitter instances for different languages
-  private static treeSitters = new Map<Language, TreeSitter>()
-  private static treeSitterQueries = new Map<Language, TreeSitter.Query>()
+  /** singleton treesitter instances for different languages */
+  private static queriers = new Map<Language, [TreeSitter, TreeSitter.Query]>()
 
   public static scanConflictsInFile(absPath: string, content?: string): ConflictSection[] {
     if (!content) {
@@ -77,77 +76,25 @@ export class SoManyConflicts {
   }
 
   private static analyzeCode(codeLines: string[], language: Language): Identifier[] {
-    // const tree: TreeSitter.Tree = treeSitter.parse(
-    //   (index: number, position: TreeSitter.Point) => {
-    //     let line = codeLines[position.row]
-    //     if (line) {
-    //       return line.slice(position.column)
-    //     } else {
-    //       return ''
-    //     }
-    //   }
-    // )
-    // TODO: should use set?
     let identifiers: Identifier[] = []
-    let treeSitter = this.treeSitters.get(language)
-    let query = this.treeSitterQueries.get(language)
 
-    let queryString = ''
-    switch (language) {
-      case Language.Java:
-        queryString = Constants.javaQuery
-        if (treeSitter == undefined && query == undefined) {
-          const JAVA = require('tree-sitter-java')
-          treeSitter = new TreeSitter()
-          treeSitter.setLanguage(JAVA)
-          this.treeSitters.set(language, treeSitter)
-          query = new TreeSitter.Query(JAVA, queryString)
-          this.treeSitterQueries.set(language, query)
-        }
-        break
-      case Language.JavaScript:
-        queryString = Constants.javaScriptQuery
-        if (treeSitter == undefined && query == undefined) {
-          const JAVASCRIPT = require('tree-sitter-javascript')
-          treeSitter = new TreeSitter()
-          treeSitter.setLanguage(JAVASCRIPT)
-          this.treeSitters.set(language, treeSitter)
-          query = new TreeSitter.Query(JAVASCRIPT, queryString)
-          this.treeSitterQueries.set(language, query)
-        }
-        break
-      case Language.TypeScript:
-        queryString = Constants.typeScriptQuery
-        if (treeSitter == undefined && query == undefined) {
-          const TYPESCRIPT = require('tree-sitter-typescript').typescript
-          treeSitter = new TreeSitter()
-          treeSitter.setLanguage(TYPESCRIPT)
-          this.treeSitters.set(language, treeSitter)
-          query = new TreeSitter.Query(TYPESCRIPT, queryString)
-          this.treeSitterQueries.set(language, query)
-        }
-        break
-      case Language.Python:
-        queryString = Constants.pythonQuery
-        if (treeSitter == undefined) {
-          const PYTHON = require('tree-sitter-python')
-          treeSitter = new TreeSitter()
-          treeSitter.setLanguage(PYTHON)
-          this.treeSitters.set(language, treeSitter)
-          query = new TreeSitter.Query(PYTHON, queryString)
-          this.treeSitterQueries.set(language, query)
-        }
-        break
-      default:
-        // early return if language not supported
-        return []
-    }
-    if (queryString.length == 0 || treeSitter == undefined || query == undefined) {
-      return []
+    // early return if we don't support the language
+    const { create, queryString } = languages[language] || {}
+    if (!queryString) return []
+
+    // store the tree sitter instance for later use
+    let instance = this.queriers.get(language)
+    if (!instance) {
+      const specification = create()
+      const treeSitter = new TreeSitter()
+      treeSitter.setLanguage(specification)
+      const treeQuery = new TreeSitter.Query(specification, queryString)
+      instance = [treeSitter, treeQuery]
+      this.queriers.set(language, instance)
     }
 
-    const tree: TreeSitter.Tree = treeSitter.parse(codeLines.join('\n'))
-    const matches: TreeSitter.QueryMatch[] = query.matches(tree.rootNode)
+    const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
+    const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
     for (let match of matches) {
       const captures: TreeSitter.QueryCapture[] = match.captures
       for (let capture of captures) {
