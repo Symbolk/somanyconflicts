@@ -4,6 +4,7 @@ export const languages = {
   'Java': {
     create: () => require('tree-sitter-java'),
     queryString: `
+      (comment) @comment
       (class_declaration name: (identifier) @type-def)
       (field_declaration (variable_declarator name: (identifier) @field-def))
       (field_access field: (identifier) @field-ref)
@@ -87,7 +88,23 @@ export const languages = {
   },
   'Python': {
     create: () => require('tree-sitter-python'),
-    queryString: ``,
+    queryString: `
+    (comment) @comment
+    (class_definition name: (identifier) @type-def)
+    (function_definition name: (identifier) @function-def)
+    (call
+      function: [
+      (identifier) @function-ref
+      (attribute 
+        object: (identifier) @method-obj
+        attribute: (identifier) @method-ref)
+       ]
+      )
+     (attribute 
+        object: (identifier) @type-ref 
+        attribute: (identifier) @field-ref)
+    (identifier) @var-ref
+    `,
   },
   'Unknown': {
     create: () => {},
