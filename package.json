@@ -2,7 +2,7 @@
   "name": "somanyconflicts",
   "displayName": "So Many Conflicts",
   "description": "No more headache on multiple conflicts after merging!",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "icon": "media/logo.png",
   "publisher": "Symbolk",
   "repository": {
@@ -10,7 +10,7 @@
     "url": "https://github.com/Symbolk/somanyconflicts"
   },
   "engines": {
-    "vscode": "^1.56.0"
+    "vscode": "^1.45.0"
   },
   "categories": [
     "Other"
