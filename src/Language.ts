@@ -19,8 +19,6 @@ export const languages = {
     create: () => require('tree-sitter-javascript'),
     queryString: `
       (comment) @comment
-      (class_declaration name: (identifier) @type-def)
-      (public_field_definition name: (property_identifier) @field-def)
       (labeled_statement label: (statement_identifier) @field-def)
       (function_declaration name: (identifier) @function-def)
       (method_definition name: (property_identifier) @method-def)
@@ -50,7 +48,11 @@ export const languages = {
     create: () => require('tree-sitter-typescript').typescript,
     queryString: `
       (comment) @comment
-      (class_declaration name: (type_identifier) @type-def)
+      (class_declaration 
+      	name: [
+	        (type_identifier) @type-def
+          (identifier) @type-def
+      ])
       (type_alias_declaration name: (type_identifier) @type-def)
       (interface_declaration name: (type_identifier) @type-def)
       (public_field_definition name: (property_identifier) @field-def)
