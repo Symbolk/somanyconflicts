@@ -26,8 +26,8 @@
 
 ## Requirements
 
-- OS: macOS ~10.15 (Recommended) or Windows 10
-- VSCode: ^1.56.0
+- OS: macOS ~10.15 (Recommended) or Windows 10 (Testing)
+- VSCode: ^1.45.0
   
 ## Installation
 
@@ -69,7 +69,7 @@
 xcode-select --install
 ```
 1. Clone repo and open in VSCode.
-2. Run `yarn` to download dependencies.
+2. Run `yarn` or `npm i` to download dependencies.
 3. Edit `node_modules/tree-sitter/binding.gyp`:
 
 ```diff
@@ -105,7 +105,7 @@ npm install --global windows-build-tools
 [windows-build-tools]: https://www.npmjs.com/package/windows-build-tools
 
 1. Clone repo and open in VSCode.
-2. Run `npm i` to download dependencies.
+2. Run `npm i` to download dependencies (yarn may not work).
 3. Edit `node_modules/tree-sitter/binding.gyp`:
 
 ```diff
@@ -120,7 +120,7 @@ Rebuild tree-sitter with:
 .\node_modules\.bin\electron-rebuild
 ```
 5. Press `F5` to run and debug extension.
-6. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
+6. In the new window, press `F1` or `Ctrl+Shift+P` and invoke command `somany`.
 
 
 ## Known Issues
