@@ -19,7 +19,8 @@ export const languages = {
     create: () => require('tree-sitter-javascript'),
     queryString: `
       (comment) @comment
-      (labeled_statement label: (statement_identifier) @field-def)
+      (class_declaration name: (identifier) @type-def)
+      (class_heritage (identifier) @type-ref)
       (function_declaration name: (identifier) @function-def)
       (method_definition name: (property_identifier) @method-def)
       (variable_declarator name: (identifier) @var-def)
@@ -31,15 +32,26 @@ export const languages = {
       ])
       (call_expression
         function: [
+          (super) @function-ref
           (identifier) @function-ref
           (member_expression
-            object: (identifier) @method-obj
+            object: [
+              (identifier)
+              (this)
+              (member_expression)
+              (call_expression)
+              (new_expression)
+            ] @method-obj
             property: (property_identifier) @method-ref)
         ]
       )
       (new_expression
-        constructor: (identifier) @type-ref
+        constructor:[
+            (identifier) @type-ref
+            (member_expression property: (property_identifier) @constructor-ref)
+          ]
       )
+      (labeled_statement label: (statement_identifier) @field-def)
       (member_expression property: (property_identifier) @field-ref)
       (identifier) @var-ref
     `,
@@ -73,15 +85,24 @@ export const languages = {
       (internal_module (identifier) @var-def)
       (call_expression
         function: [
+          (super) @function-ref
           (identifier) @function-ref
           (member_expression
-            object: [(identifier) (non_null_expression)] @method-obj
+            object: [
+              (identifier) 
+              (non_null_expression)
+              (this)
+              (member_expression)
+              (call_expression)
+              (new_expression)
+            ] @method-obj
             property: (property_identifier) @method-ref)
         ]
       )
       (member_expression property: (property_identifier) @field-ref)
       (new_expression
         constructor: (identifier) @type-ref
+        (member_expression property: (property_identifier) @constructor-ref)
       )
       (type_identifier) @type-ref
       (identifier) @var-ref
