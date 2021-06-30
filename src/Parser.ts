@@ -36,7 +36,7 @@ export class Parser {
       if (startsWithMarkerOursResult.success) {
         startLine = i
         if (state !== ParserState.OutsideConflict) {
-          throw new Error('Unexpected conflict marker')
+          throw new Error('Unexpected conflict marker' + this.formatLog(line, startLine, endLine))
         }
 
         if (currentTextLines.length > 0) {
@@ -52,7 +52,7 @@ export class Parser {
         state = ParserState.Ours
       } else if (startsWithMarkerBaseResult.success) {
         if (state !== ParserState.Ours) {
-          throw new Error('Unexpected conflict marker')
+          throw new Error('Unexpected conflict marker' + this.formatLog(line, startLine, endLine))
         }
 
         currentConflict!.hasBase = true
@@ -62,7 +62,7 @@ export class Parser {
         state = ParserState.Base
       } else if (startsWithMarkerTheirsResult.success) {
         if (state !== ParserState.Ours && state !== ParserState.Base) {
-          throw new Error('Unexpected conflict marker')
+          throw new Error('Unexpected conflict marker' + this.formatLog(line, startLine, endLine))
         }
 
         currentConflict!.setTextAfterMarkerTheirs(
@@ -71,7 +71,7 @@ export class Parser {
         state = ParserState.Theirs
       } else if (startsWithMarkerEndResult.success) {
         if (state !== ParserState.Theirs) {
-          throw new Error('Unexpected conflict marker')
+          throw new Error('Unexpected conflict marker' + this.formatLog(line, startLine, endLine))
         }
 
         currentConflict!.setTextAfterMarkerEnd(
@@ -92,13 +92,13 @@ export class Parser {
         } else if (state === ParserState.Theirs) {
           currentConflict!.addTheirLine(line)
         } else {
-          throw new Error('Unexpected state')
+          throw new Error('Unexpected state' + this.formatLog(line, startLine, endLine))
         }
       }
     }
 
     if (currentConflict) {
-      throw new Error('Conflict still open')
+      throw new Error('Conflict still open' + this.formatLog('', startLine, endLine))
     }
 
     if (currentTextLines.length > 0) {
@@ -106,6 +106,10 @@ export class Parser {
     }
 
     return sections
+  }
+
+  private static formatLog(line: string, startLine: number, endLine: number): string {
+    return '(' + startLine + '-' + endLine + ')' + ': ' + line
   }
 
   public static getLines(text: string): string[] {
