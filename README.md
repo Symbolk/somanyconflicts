@@ -1,6 +1,6 @@
 <div align="center">
   <a href="" target="_blank">
-    <img width="160" src="https://github.com/Symbolk/somanyconflicts/blob/main/media/logo.png" alt="logo">
+    <img width="160" src="/media/logo.png" alt="logo">
   </a>
   <h1 id="somanyconflicts"><a href="https://github.com/Symbolk/somanyconflicts/" target="repo">So Many Conflicts</a></h1>
 
