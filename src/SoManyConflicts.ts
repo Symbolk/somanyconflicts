@@ -33,7 +33,7 @@ export class SoManyConflicts {
     // get all files in conflict state in the opened workspace
     try {
       let filePaths: string[] = await FileUtils.getConflictingFilePaths(workspace)
-      if (filePaths.length == 0) {
+      if (filePaths.length === 0) {
         message = 'Found no conflicting files in the workspace!'
         vscode.window.showWarningMessage(message)
         return sectionsByFile
@@ -54,7 +54,7 @@ export class SoManyConflicts {
         for (let conflictSection of conflictSections) {
           let conflict: Conflict = conflictSection.conflict
           // LSP: filter symbols involved in each conflict block
-          if (symbols !== undefined) {
+          if (symbols != null) {
             this.filterConflictingSymbols(conflict, symbols)
           }
           // AST: extract identifiers (def/use) to complement LSP results
@@ -93,24 +93,29 @@ export class SoManyConflicts {
       this.queriers.set(language, instance)
     }
 
-    const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
-    const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
-    for (let match of matches) {
-      const captures: TreeSitter.QueryCapture[] = match.captures
-      for (let capture of captures) {
-        if (capture.node !== undefined) {
-          if (capture.node.text !== undefined) {
-            identifiers.push(new Identifier(capture.name, capture.node.text))
+    try {
+      const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
+      const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
+      for (let match of matches) {
+        const captures: TreeSitter.QueryCapture[] = match.captures
+        for (let capture of captures) {
+          if (capture.node != null) {
+            if (capture.node.text != null) {
+              identifiers.push(new Identifier(capture.name, capture.node.text))
+            }
           }
         }
       }
+    } catch (error) {
+      console.log(error)
     }
     return identifiers
   }
 
   public static constructGraph(allConflictSections: ConflictSection[]) {
     // let graph = new graphlib.Graph({ directed: true, multigraph: true })
-    let graph = new graphlib.Graph({ multigraph: true })
+    // let graph = new graphlib.Graph({ multigraph: true })
+    let graph = new graphlib.Graph()
 
     // construct graph nodes
     for (let conflictSection of allConflictSections) {
@@ -130,7 +135,7 @@ export class SoManyConflicts {
         let dependency = AlgUtils.computeDependency(conflict1, conflict2)
         if (dependency > 0) {
           let lastWeight = graph.edge(index1, index2)
-          if (lastWeight == undefined) {
+          if (lastWeight == null) {
             graph.setEdge(index1, index2, dependency)
           } else {
             graph.setEdge(index1, index2, lastWeight + dependency)
@@ -138,7 +143,12 @@ export class SoManyConflicts {
         }
         let similarity = AlgUtils.computeSimilarity(conflict1, conflict2)
         if (similarity > 0.5) {
-          graph.setEdge(index1, index2, similarity)
+          let lastWeight = graph.edge(index1, index2)
+          if (lastWeight == null) {
+            graph.setEdge(index1, index2, similarity)
+          } else {
+            graph.setEdge(index1, index2, lastWeight + similarity)
+          }
         }
       }
     }
@@ -174,7 +184,7 @@ export class SoManyConflicts {
 
     let focused: ConflictSection = this.getConflictSectionByIndex(allConflictSections, conflictIndex)
     let suggestedStrategy: Strategy = getStrategy(focused.strategiesProb)
-    if (suggestedStrategy != Strategy.Unknown) {
+    if (suggestedStrategy !== Strategy.Unknown) {
       const decorationOptions: vscode.DecorationOptions[] = []
       switch (suggestedStrategy) {
         case Strategy.AcceptOurs:
@@ -208,13 +218,13 @@ export class SoManyConflicts {
     if (edges) {
       for (let edge of edges) {
         if (!isNaN(+edge.v)) {
-          if (+edge.v != conflictIndex) {
+          if (+edge.v !== conflictIndex) {
             let conflict = this.getConflictByIndex(allConflictSections, +edge.v)
             locations.push(new vscode.Location(conflict.uri!, conflict.base.range))
           }
         }
         if (!isNaN(+edge.w)) {
-          if (+edge.w != conflictIndex) {
+          if (+edge.w !== conflictIndex) {
             let conflict = this.getConflictByIndex(allConflictSections, +edge.w)
             locations.push(new vscode.Location(conflict.uri!, conflict.base.range))
           }
@@ -222,7 +232,7 @@ export class SoManyConflicts {
       }
     }
 
-    if (edges.length == 0 || locations.length == 0) {
+    if (edges.length === 0 || locations.length === 0) {
       vscode.window.showWarningMessage('Found no related conflicts for this conflict.')
     } else {
       vscode.commands.executeCommand('editor.action.peekLocations', focusedConflict.uri, focusedConflict.ours.range.start, locations, 'peek')
@@ -242,17 +252,17 @@ export class SoManyConflicts {
       if (conflict.ours.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addOurIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
+        conflict.addOurIdentifier(new Symbol(symbol, refs == null ? [] : refs))
       }
       if (conflict.base.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addBaseIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
+        conflict.addBaseIdentifier(new Symbol(symbol, refs == null ? [] : refs))
       }
       if (conflict.theirs.range.contains(symbol.selectionRange)) {
         let refs = await this.getRefs(conflict.uri!, this.middlePosition(symbol.selectionRange))
         // cache symbols and refs in ConflictSections
-        conflict.addTheirIdentifier(new Symbol(symbol, refs == undefined ? [] : refs))
+        conflict.addTheirIdentifier(new Symbol(symbol, refs == null ? [] : refs))
       }
       if (symbol.children.length > 0) {
         this.filterConflictingSymbols(conflict, symbol.children)
