@@ -2,9 +2,6 @@
 .vscode-test/**
 out/test/**
 
-node_modules
-webpack.config.js
-
 src/**
 .gitignore
 .yarnrc
