@@ -63,7 +63,8 @@ export class SoManyConflicts {
         sectionsByFile.set(uri.fsPath, conflictSections)
       }
     } catch (err) {
-      vscode.window.showErrorMessage(err.message)
+      console.log(err.message)
+      console.log(err)
       return sectionsByFile
     }
     return sectionsByFile

@@ -5,6 +5,7 @@
   "version": "0.0.5",
   "icon": "media/logo.png",
   "publisher": "Symbolk",
+  "preview": true,
   "repository": {
     "type": "git",
     "url": "https://github.com/Symbolk/somanyconflicts"
