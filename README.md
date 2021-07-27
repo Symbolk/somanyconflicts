@@ -26,7 +26,7 @@
 
 ## Requirements
 
-- OS: macOS ~10.15 (Recommended) or Windows 10 (Testing)
+- OS: macOS ~10.15 (Currently only macOS is supported!)
 - VSCode: ^1.45.0
   
 ## Installation

@@ -2,7 +2,8 @@
   "name": "somanyconflicts",
   "displayName": "So Many Conflicts",
   "description": "No more headache on multiple conflicts after merging!",
-  "version": "0.0.5",
+  "version": "0.0.6",
+  "preview": true,
   "icon": "media/logo.png",
   "publisher": "Symbolk",
   "repository": {
