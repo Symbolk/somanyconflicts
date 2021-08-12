@@ -8,6 +8,8 @@
 
 **A VSCode extension to help developers resolve so many merge conflicts interactively and systematically, to lighten this tedious work and avoid making mistakes**.
 
+> Please note that the marketplace version currently only supports macOS, if you are under Windows, please download and try the Windows [release] and report issues!
+
 ![screen](/media/screenshot.png?raw=true "screen")
 
 
@@ -53,9 +55,9 @@
 
 #### Under macOS (Recommended)
 - Node.JS ^14.16.0
+- Python 3.7.0
 - (optional) Yarn ^1.16.0
 - VSCode ^1.56.0
-
 #### Under Windows
 - Node.JS ^14.16.0
 - VSCode ^1.56.0
@@ -82,6 +84,12 @@ Rebuild tree-sitter with:
 
 ```sh
 ./node_modules/.bin/electron-rebuild
+```
+
+or:
+
+```sh
+yarn rebuild
 ```
 4. Press `F5` to run and debug extension.
 5. In the new window, press `F1` or `Cmd+Shift+P` and invoke command `somany`.
@@ -125,6 +133,27 @@ Rebuild tree-sitter with:
 
 ## Known Issues
 
+- When you upgrade macOS with System Update, it may break the development environment and report such error when `yarn` or `npm i` is executed. 
+
+```
+/Users/xx/Library/Caches/node-gyp/16.6.0/include/node/v8-internal.h:488:38: error: no template named 'remove_cv_t' in namespace 'std'; did you mean 'remove_cv'?
+            !std::is_same<Data, std::remove_cv_t<T>>::value>::Perform(data);
+                                ~~~~~^~~~~~~~~~~
+                                     remove_cv
+/Library/Developer/CommandLineTools/usr/bin/../include/c++/v1/type_traits:697:50: note: 'remove_cv' declared here
+template <class _Tp> struct _LIBCPP_TEMPLATE_VIS remove_cv
+                                                 ^
+1 error generated.
+```
+
+Then you can try to reinstall the XCode command line tools:
+
+```shell
+sudo rm -rf `xcode-select -p`
+xcode-select --install
+yarn install -std=c++14
+```
+
 - If you find that electron takes too much time to install when running `yarn`, stop it with `Command+C` and remove `"electron": "12.0.4"` from `package.json` first, then run the following command to install modules:
 ```sh
 yarn
@@ -138,28 +167,25 @@ ELECTRON_MIRROR=https://npm.taobao.org/mirrors/electron/ yarn add -D electron@12
 [PR]: https://github.com/tree-sitter/node-tree-sitter/pull/83
 [issue]: https://github.com/tree-sitter/node-tree-sitter/issues/82
 
-1. Edit `node_modules/tree-sitter/binding.gyp`:
+  1. Edit `node_modules/tree-sitter/binding.gyp`:
 
-```diff
-      'xcode_settings': {
--       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
-+       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
-      },
-```
+  ```diff
+        'xcode_settings': {
+  -       'CLANG_CXX_LANGUAGE_STANDARD': 'c++11',
+  +       'CLANG_CXX_LANGUAGE_STANDARD': 'c++14',
+        },
+  ```
 
-2. Rebuild it with:
+  2. Rebuild it with:
 
-```sh
-./node_modules/.bin/electron-rebuild
-```
+  ```sh
+  ./node_modules/.bin/electron-rebuild
+  ```
 
 > Note that, unfortunately, each time you run yarn, you need to rebuild treesitter as above :-(
 
 
 - "Fail to activate extension" or "Command not found" under Windows: Since SoManyConflicts relies on a native module TreeSitter written in C/C++, it has to be rebuilt under different OS before use, please follow the Developement#Under Windows for how to build it. We are figuring out how to make it easier to install.
-
-
-<center> <strong>Enjoy!</strong> </center>
 
 > Conflicts parsing part is borrowed from [Conflict Squeezer], thanks for the nice work!
 
