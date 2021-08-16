@@ -2,7 +2,7 @@
   "name": "somanyconflicts",
   "displayName": "So Many Conflicts",
   "description": "No more headache on multiple conflicts after merging!",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "preview": true,
   "icon": "media/logo.png",
   "publisher": "Symbolk",
@@ -67,7 +67,7 @@
       "conflictTreeViewPanel": [
         {
           "id": "suggestedConflictTreeView",
-          "name": "Suggested Conflicts to Resolve",
+          "name": "Grouped and Ordered Conflicts",
           "contextualTitle": "So Many Conflicts",
           "icon": "media/merge.png"
         },
@@ -79,24 +79,40 @@
         }
       ]
     },
+    "menus": {
+      "view/title": [
+        {
+          "command": "somanyconflicts.start",
+          "when": "view == suggestedConflictTreeView",
+          "group": "navigation@10"
+        },
+        {
+          "command": "somanyconflicts.scan",
+          "when": "view == allConflictTreeView",
+          "group": "navigation@10"
+        }
+      ]
+    },
     "viewsWelcome": [
       {
         "view": "suggestedConflictTreeView",
-        "contents": "[Suggest Conflicts to Resolve](command:somanyconflicts.start)"
+        "contents": "Click this button to group and order related merge conflicts for quicker resolution.\n[Group Related Conflicts](command:somanyconflicts.start)"
       },
       {
         "view": "allConflictTreeView",
-        "contents": "[Scan All Conflicts](command:somanyconflicts.scan)"
+        "contents": "Click this button to scan all merge conflicts in the opened directory or repository.\n[Scan All Conflicts](command:somanyconflicts.scan)"
       }
     ],
     "commands": [
       {
         "command": "somanyconflicts.scan",
-        "title": "So Many Conflicts: Scan All Merge Conflicts"
+        "title": "So Many Conflicts: Scan All Merge Conflicts",
+        "icon": "$(refresh)"
       },
       {
         "command": "somanyconflicts.start",
-        "title": "So Many Conflicts: Where to Start Resolving?"
+        "title": "So Many Conflicts: Where to Start Resolving?",
+        "icon": "$(refresh)"
       },
       {
         "command": "somanyconflicts.next",

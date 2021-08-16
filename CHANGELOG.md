@@ -4,6 +4,7 @@ All notable changes to the "somanyconflicts" extension will be documented in thi
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [Unreleased]
+## [v0.1.0]
 
-- Initial release
+- Switch to WebAssembly for native module TreeSitter to cross platform.
+- Be more self-explainable without README.
