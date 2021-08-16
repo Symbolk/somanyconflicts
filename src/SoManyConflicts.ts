@@ -6,7 +6,7 @@ import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
 import { AlgUtils } from './AlgUtils'
 const graphlib = require('@dagrejs/graphlib')
-import * as TreeSitter from 'tree-sitter'
+import * as TreeSitter from 'web-tree-sitter'
 import { Identifier } from './Identifier'
 import { Language, languages } from './Language'
 import { getStrategy, Strategy } from './Strategy'
@@ -88,7 +88,7 @@ export class SoManyConflicts {
       const specification = create()
       const treeSitter = new TreeSitter()
       treeSitter.setLanguage(specification)
-      const treeQuery = new TreeSitter.Query(specification, queryString)
+      const treeQuery = new TreeSitter.Query()
       instance = [treeSitter, treeQuery]
       this.queriers.set(language, instance)
     }
