@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
 import { Parser } from './Parser'
 import { ConflictSection } from './ConflictSection'
 import { Symbol } from './Symbol'
@@ -69,13 +70,13 @@ export class SoManyConflicts {
     return sectionsByFile
   }
 
-  private static extractConflictingIdentifiers(conflict: Conflict, language: Language) {
-    conflict.base.identifiers = this.analyzeCode(conflict.base.lines, language)
-    conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines, language)
-    conflict.theirs.identifiers = this.analyzeCode(conflict.theirs.lines, language)
+  private static async extractConflictingIdentifiers(conflict: Conflict, language: Language) {
+    conflict.base.identifiers = await this.analyzeCode(conflict.base.lines, language)
+    conflict.ours.identifiers = await this.analyzeCode(conflict.ours.lines, language)
+    conflict.theirs.identifiers = await this.analyzeCode(conflict.theirs.lines, language)
   }
 
-  private static analyzeCode(codeLines: string[], language: Language): Identifier[] {
+  private static async analyzeCode(codeLines: string[], language: Language): Promise<Identifier[]> {
     let identifiers: Identifier[] = []
 
     // early return if we don't support the language
@@ -86,8 +87,7 @@ export class SoManyConflicts {
     let instance = this.queriers.get(language)
     if (!instance) {
       const specification = create()
-      const treeSitter = new TreeSitter()
-      treeSitter.setLanguage(specification)
+      const treeSitter = await this.initParser(language)
       const treeQuery = new TreeSitter.Query()
       instance = [treeSitter, treeQuery]
       this.queriers.set(language, instance)
@@ -110,6 +110,16 @@ export class SoManyConflicts {
       console.log(error)
     }
     return identifiers
+  }
+
+  private static async initParser(language: Language) {
+    await TreeSitter.init()
+    const parser = new TreeSitter()
+
+    let langFile = path.join(__dirname, '../parsers', language.toLowerCase + '.wasm')
+    const langObj = await TreeSitter.Language.load(langFile)
+    parser.setLanguage(langObj)
+    return parser
   }
 
   public static constructGraph(allConflictSections: ConflictSection[]) {
