@@ -12,6 +12,8 @@ import { Identifier } from './Identifier'
 import { Language, languages } from './Language'
 import { getStrategy, Strategy } from './Strategy'
 
+const treeSitterPromise = TreeSitter.init()
+
 export class SoManyConflicts {
   /** singleton treesitter instances for different languages */
   private static queriers = new Map<Language, [TreeSitter, TreeSitter.Query]>()
@@ -86,7 +88,7 @@ export class SoManyConflicts {
     // store the tree sitter instance for later use
     let instance = this.queriers.get(language)
     if (!instance) {
-      const specification = create()
+      // const specification = create()
       const treeSitter = await this.initParser(language)
       const treeQuery = new TreeSitter.Query()
       instance = [treeSitter, treeQuery]
@@ -95,6 +97,7 @@ export class SoManyConflicts {
 
     try {
       const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
+      console.log(tree.rootNode.toString())
       const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
       for (let match of matches) {
         const captures: TreeSitter.QueryCapture[] = match.captures
@@ -113,12 +116,13 @@ export class SoManyConflicts {
   }
 
   private static async initParser(language: Language) {
-    await TreeSitter.init()
+    await treeSitterPromise
     const parser = new TreeSitter()
 
-    let langFile = path.join(__dirname, '../parsers', language.toLowerCase + '.wasm')
+    let langFile = path.join(__dirname, '../parsers', language.toLowerCase() + '.wasm')
     const langObj = await TreeSitter.Language.load(langFile)
     parser.setLanguage(langObj)
+    // console.log(language + " Parser is loaded!")
     return parser
   }
 
