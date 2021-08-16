@@ -24,7 +24,7 @@ export class SoManyConflicts {
     }
     let uri: vscode.Uri = vscode.Uri.file(absPath)
     const conflictSections: ConflictSection[] = Parser.parse(uri, content).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
-    conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
+    // conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
 
     return conflictSections
   }
@@ -82,48 +82,47 @@ export class SoManyConflicts {
     let identifiers: Identifier[] = []
 
     // early return if we don't support the language
-    const { create, queryString } = languages[language] || {}
+    const { queryString } = languages[language] || {}
     if (!queryString) return []
 
     // store the tree sitter instance for later use
-    let instance = this.queriers.get(language)
-    if (!instance) {
+    if (!this.queriers.get(language)) {
       // const specification = create()
-      const treeSitter = await this.initParser(language)
-      const treeQuery = new TreeSitter.Query()
-      instance = [treeSitter, treeQuery]
-      this.queriers.set(language, instance)
+      await this.initParser(language, queryString)
     }
+    let instance = this.queriers.get(language)
 
-    try {
-      const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
-      console.log(tree.rootNode.toString())
-      const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
-      for (let match of matches) {
-        const captures: TreeSitter.QueryCapture[] = match.captures
-        for (let capture of captures) {
-          if (capture.node != null) {
-            if (capture.node.text != null) {
-              identifiers.push(new Identifier(capture.name, capture.node.text))
+    if (instance) {
+      try {
+        const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
+        const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
+        for (let match of matches) {
+          const captures: TreeSitter.QueryCapture[] = match.captures
+          for (let capture of captures) {
+            if (capture.node != null) {
+              if (capture.node.text != null) {
+                identifiers.push(new Identifier(capture.name, capture.node.text))
+              }
             }
           }
         }
+      } catch (error) {
+        console.log(error)
       }
-    } catch (error) {
-      console.log(error)
     }
     return identifiers
   }
 
-  private static async initParser(language: Language) {
+  private static async initParser(language: Language, queryString: string) {
     await treeSitterPromise
     const parser = new TreeSitter()
 
     let langFile = path.join(__dirname, '../parsers', language.toLowerCase() + '.wasm')
     const langObj = await TreeSitter.Language.load(langFile)
     parser.setLanguage(langObj)
+    const query = langObj.query(queryString)
     // console.log(language + " Parser is loaded!")
-    return parser
+    this.queriers.set(language, [parser, query])
   }
 
   public static constructGraph(allConflictSections: ConflictSection[]) {

@@ -1,8 +1,7 @@
 'use strict'
 
 export const languages = {
-  'Java': {
-    create: () => require('tree-sitter-java'),
+  Java: {
     queryString: `
       (comment) @comment
       (class_declaration name: (identifier) @type-def)
@@ -16,8 +15,7 @@ export const languages = {
       (type_arguments (type_identifier) @type-ref)
     `,
   },
-  'JavaScript': {
-    create: () => require('tree-sitter-javascript'),
+  JavaScript: {
     queryString: `
       (comment) @comment
       (class_declaration name: (identifier) @type-def)
@@ -57,8 +55,7 @@ export const languages = {
       (identifier) @var-ref
     `,
   },
-  'TypeScript': {
-    create: () => require('tree-sitter-typescript').typescript,
+  TypeScript: {
     queryString: `
       (comment) @comment
       (class_declaration 
@@ -109,8 +106,7 @@ export const languages = {
       (identifier) @var-ref
     `,
   },
-  'Python': {
-    create: () => require('tree-sitter-python'),
+  Python: {
     queryString: `
     (comment) @comment
     (class_definition name: (identifier) @type-def)
@@ -129,10 +125,9 @@ export const languages = {
     (identifier) @var-ref
     `,
   },
-  'Unknown': {
-    create: () => {},
+  Unknown: {
     queryString: ``,
-  }
+  },
 } as const
 
 export type Language = keyof typeof languages
