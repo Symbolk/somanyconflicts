@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import * as path from 'path'
 import { Parser } from './Parser'
 import { ConflictSection } from './ConflictSection'
 import { Symbol } from './Symbol'
@@ -6,10 +7,12 @@ import { Conflict } from './Conflict'
 import { FileUtils } from './FileUtils'
 import { AlgUtils } from './AlgUtils'
 const graphlib = require('@dagrejs/graphlib')
-import * as TreeSitter from 'tree-sitter'
+import * as TreeSitter from 'web-tree-sitter'
 import { Identifier } from './Identifier'
 import { Language, languages } from './Language'
 import { getStrategy, Strategy } from './Strategy'
+
+const treeSitterPromise = TreeSitter.init()
 
 export class SoManyConflicts {
   /** singleton treesitter instances for different languages */
@@ -21,7 +24,7 @@ export class SoManyConflicts {
     }
     let uri: vscode.Uri = vscode.Uri.file(absPath)
     const conflictSections: ConflictSection[] = Parser.parse(uri, content).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
-    conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
+    // conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
 
     return conflictSections
   }
@@ -69,47 +72,57 @@ export class SoManyConflicts {
     return sectionsByFile
   }
 
-  private static extractConflictingIdentifiers(conflict: Conflict, language: Language) {
-    conflict.base.identifiers = this.analyzeCode(conflict.base.lines, language)
-    conflict.ours.identifiers = this.analyzeCode(conflict.ours.lines, language)
-    conflict.theirs.identifiers = this.analyzeCode(conflict.theirs.lines, language)
+  private static async extractConflictingIdentifiers(conflict: Conflict, language: Language) {
+    conflict.base.identifiers = await this.analyzeCode(conflict.base.lines, language)
+    conflict.ours.identifiers = await this.analyzeCode(conflict.ours.lines, language)
+    conflict.theirs.identifiers = await this.analyzeCode(conflict.theirs.lines, language)
   }
 
-  private static analyzeCode(codeLines: string[], language: Language): Identifier[] {
+  private static async analyzeCode(codeLines: string[], language: Language): Promise<Identifier[]> {
     let identifiers: Identifier[] = []
 
     // early return if we don't support the language
-    const { create, queryString } = languages[language] || {}
+    const { queryString } = languages[language] || {}
     if (!queryString) return []
 
     // store the tree sitter instance for later use
-    let instance = this.queriers.get(language)
-    if (!instance) {
-      const specification = create()
-      const treeSitter = new TreeSitter()
-      treeSitter.setLanguage(specification)
-      const treeQuery = new TreeSitter.Query(specification, queryString)
-      instance = [treeSitter, treeQuery]
-      this.queriers.set(language, instance)
+    if (!this.queriers.get(language)) {
+      // const specification = create()
+      await this.initParser(language, queryString)
     }
+    let instance = this.queriers.get(language)
 
-    try {
-      const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
-      const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
-      for (let match of matches) {
-        const captures: TreeSitter.QueryCapture[] = match.captures
-        for (let capture of captures) {
-          if (capture.node != null) {
-            if (capture.node.text != null) {
-              identifiers.push(new Identifier(capture.name, capture.node.text))
+    if (instance) {
+      try {
+        const tree: TreeSitter.Tree = instance[0].parse(codeLines.join('\n'))
+        const matches: TreeSitter.QueryMatch[] = instance[1].matches(tree.rootNode)
+        for (let match of matches) {
+          const captures: TreeSitter.QueryCapture[] = match.captures
+          for (let capture of captures) {
+            if (capture.node != null) {
+              if (capture.node.text != null) {
+                identifiers.push(new Identifier(capture.name, capture.node.text))
+              }
             }
           }
         }
+      } catch (error) {
+        console.log(error)
       }
-    } catch (error) {
-      console.log(error)
     }
     return identifiers
+  }
+
+  private static async initParser(language: Language, queryString: string) {
+    await treeSitterPromise
+    const parser = new TreeSitter()
+
+    let langFile = path.join(__dirname, '../parsers', language.toLowerCase() + '.wasm')
+    const langObj = await TreeSitter.Language.load(langFile)
+    parser.setLanguage(langObj)
+    const query = langObj.query(queryString)
+    // console.log(language + " Parser is loaded!")
+    this.queriers.set(language, [parser, query])
   }
 
   public static constructGraph(allConflictSections: ConflictSection[]) {
