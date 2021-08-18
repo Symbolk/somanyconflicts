@@ -12,9 +12,11 @@ export class ConflictSection implements ISection {
   public get index(): string {
     return this._index
   }
+
   public set index(value: string) {
     this._index = value
   }
+
   public get conflict(): Conflict {
     return this._conflict
   }
@@ -29,22 +31,27 @@ export class ConflictSection implements ISection {
   public get hasResolved(): boolean {
     return this._hasResolved
   }
+
   public set hasResolved(value: boolean) {
     this._hasResolved = value
   }
+
   // code string after resolution
   private _resolvedCode: string = ''
   public get resolvedCode(): string {
     return this._resolvedCode
   }
+
   public set resolvedCode(value: string) {
     this._resolvedCode = value
   }
+
   // update interactively as conflicts are resolved
   private _strategiesProb: Array<number> = new Array<number>(6).fill(1 / 6)
   public get strategiesProb(): Array<number> {
     return this._strategiesProb
   }
+
   public set strategiesProb(value: Array<number>) {
     this._strategiesProb = value
   }
@@ -53,6 +60,7 @@ export class ConflictSection implements ISection {
   public get stragegy(): Strategy {
     return this._stragegy
   }
+
   public set stragegy(value: Strategy) {
     this._stragegy = value
   }
@@ -66,9 +74,9 @@ export class ConflictSection implements ISection {
       this._stragegy = Strategy.AcceptNone
       return
     }
-    let similarities: number[] = []
+    const similarities: number[] = []
 
-    let ourText: string[] = [this.conflict.ours.lines.join('')]
+    const ourText: string[] = [this.conflict.ours.lines.join('')]
     let theirText: string[], baseText: string[]
 
     let simi = AlgUtils.compareLineByLine([newText], ourText)
@@ -97,7 +105,7 @@ export class ConflictSection implements ISection {
           return
         } else {
           similarities.push(simi)
-          let bothText: string[] = [ourText[0] + theirText[0]]
+          const bothText: string[] = [ourText[0] + theirText[0]]
           simi = AlgUtils.compareLineByLine([newText], bothText)
           if (simi == 1.0) {
             this._resolvedCode = newText
@@ -111,8 +119,8 @@ export class ConflictSection implements ISection {
       }
     }
     // if none match, save similarities
-    let i = 0
-    let idx = similarities.reduce((maxIndex, x, i, arr) => (x.toFixed(4) > arr[maxIndex].toFixed(4) ? i : maxIndex), 0)
+    const i = 0
+    const idx = similarities.reduce((maxIndex, x, i, arr) => (x.toFixed(4) > arr[maxIndex].toFixed(4) ? i : maxIndex), 0)
     switch (idx) {
       case (0): {
         this._stragegy = Strategy.AcceptOurs
@@ -140,14 +148,14 @@ export class ConflictSection implements ISection {
 
   public updateStrategy(probs: Array<number>, weight: number): Array<number> {
     // avg (prob*weight) + self.prob
-    let newProbs = probs.map((p) => p * weight)
-    for (let i in newProbs) {
+    const newProbs = probs.map((p) => p * weight)
+    for (const i in newProbs) {
       this._strategiesProb[i] += newProbs[i]
     }
-    let sum = this._strategiesProb.reduce((a, b) => a + b, 0)
+    const sum = this._strategiesProb.reduce((a, b) => a + b, 0)
 
     if (sum != 0) {
-      for (let i in this._strategiesProb) {
+      for (const i in this._strategiesProb) {
         this._strategiesProb[i] = +(this._strategiesProb[i] / sum)
       }
     }
@@ -156,10 +164,10 @@ export class ConflictSection implements ISection {
   }
 
   public reverseUpdatedStrategy(probs: Array<number>, weight: number): Array<number> {
-    let newProbs = probs.map((p) => p * weight)
-    let sum = newProbs.reduce((a, b) => a + b, 0)
+    const newProbs = probs.map((p) => p * weight)
+    const sum = newProbs.reduce((a, b) => a + b, 0)
     if (sum != 0) {
-      for (let i in this._strategiesProb) {
+      for (const i in this._strategiesProb) {
         this._strategiesProb[i] = this._strategiesProb[i] * (1 + weight) - newProbs[i]
       }
     }

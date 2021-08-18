@@ -1,24 +1,24 @@
 export class MutexUtils {
-    private mutex = Promise.resolve();
+    private mutex = Promise.resolve()
 
     lock(): PromiseLike<() => void> {
-        let begin: (unlock: () => void) => void = unlock => { };
+      let begin: (unlock: () => void) => void = unlock => { }
 
-        this.mutex = this.mutex.then(() => {
-            return new Promise(begin);
-        });
+      this.mutex = this.mutex.then(() => {
+        return new Promise(begin)
+      })
 
-        return new Promise(res => {
-            begin = res;
-        });
+      return new Promise(res => {
+        begin = res
+      })
     }
 
     async dispatch<T>(fn: (() => T) | (() => PromiseLike<T>)): Promise<T> {
-        const unlock = await this.lock();
-        try {
-            return await Promise.resolve(fn());
-        } finally {
-            unlock();
-        }
+      const unlock = await this.lock()
+      try {
+        return await Promise.resolve(fn())
+      } finally {
+        unlock()
+      }
     }
 }

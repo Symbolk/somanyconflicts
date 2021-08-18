@@ -26,6 +26,8 @@ rules:
     - warn
     - always-multiline
 
+  no-redeclare: off
+
   semi: off
   '@typescript-eslint/semi':
     - error

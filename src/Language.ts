@@ -126,7 +126,7 @@ export const languages = {
     `,
   },
   Unknown: {
-    queryString: ``,
+    queryString: '',
   },
 } as const
 

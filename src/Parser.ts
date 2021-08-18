@@ -14,7 +14,7 @@ export class Parser {
     const lines: string[] = Parser.getLines(text)
 
     let state: ParserState = ParserState.OutsideConflict
-    let currentConflict: Conflict | undefined = undefined
+    let currentConflict: Conflict | undefined
     let currentTextLines: string[] = []
     let startLine: number = -1
     let endLine: number = -1
@@ -47,7 +47,7 @@ export class Parser {
         currentConflict = new Conflict()
         currentConflict!.uri = uri
         currentConflict.setTextAfterMarkerOurs(
-          startsWithMarkerOursResult.remainingText
+          startsWithMarkerOursResult.remainingText,
         )
         state = ParserState.Ours
       } else if (startsWithMarkerBaseResult.success) {
@@ -57,7 +57,7 @@ export class Parser {
 
         currentConflict!.hasBase = true
         currentConflict!.setTextAfterMarkerBase(
-          startsWithMarkerBaseResult.remainingText
+          startsWithMarkerBaseResult.remainingText,
         )
         state = ParserState.Base
       } else if (startsWithMarkerTheirsResult.success) {
@@ -66,7 +66,7 @@ export class Parser {
         }
 
         currentConflict!.setTextAfterMarkerTheirs(
-          startsWithMarkerTheirsResult.remainingText
+          startsWithMarkerTheirsResult.remainingText,
         )
         state = ParserState.Theirs
       } else if (startsWithMarkerEndResult.success) {
@@ -75,7 +75,7 @@ export class Parser {
         }
 
         currentConflict!.setTextAfterMarkerEnd(
-          startsWithMarkerEndResult.remainingText
+          startsWithMarkerEndResult.remainingText,
         )
         endLine = i
         currentConflict!.computeRanges(startLine, endLine)

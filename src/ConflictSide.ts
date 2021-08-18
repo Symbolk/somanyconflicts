@@ -39,6 +39,7 @@ export class ConflictSide {
   public get identifiers(): Identifier[] {
     return this._identifiers
   }
+
   public set identifiers(value: Identifier[]) {
     this._identifiers = value
   }
