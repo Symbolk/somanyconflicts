@@ -212,13 +212,29 @@ export class SoManyConflicts {
   public static suggestStartingPoint(allConflictSections: ConflictSection[], graph: any): ConflictSection[][] {
     let groupedConflictSections: ConflictSection[][] = []
     let components = graphlib.alg.components(graph)
-    components.sort(function (a: [], b: []) {
+    // let strongComponents = graphlib.alg.tarjan(graph)
+    // MUST be a Directed Acyclic Graph (DAG)
+    let topoSorted: string[] = []
+    // if (graphlib.alog.isAcyclic(graph)) { // in 2.1.4, this method has bug that leads to infinite loop
+    let cycles: [] = graphlib.alg.findCycles(graph)
+    if (!cycles || cycles.length === 0) {
+      topoSorted = graphlib.alg.topsort(graph)
+    }
+
+    // sort components by the number of nodes
+    components.sort((a: [], b: []) => {
       // ASC  -> a.length - b.length
       // DESC -> b.length - a.length
       return b.length - a.length
     })
     for (let component of components) {
       if (component.length > 0) {
+        // sort nodes topologically inside each component according to topoSorted
+        if (topoSorted.length > 0) {
+          component.sort((a: string, b: string) => {
+            return topoSorted.indexOf(a) - topoSorted.indexOf(b)
+          })
+        }
         let sections: ConflictSection[] = []
         for (let element of component) {
           let index: number = +element
