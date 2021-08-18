@@ -3,13 +3,17 @@
 import { ISection } from './ISection'
 
 export class TextSection implements ISection {
-  private readonly lines: string[] = []
+  private readonly _lines: string[] = []
+
+  public get lines(): string[] {
+    return this._lines
+  }
 
   public constructor(lines: string[]) {
-    this.lines = lines
+    this._lines = lines
   }
 
   public getText(): string {
-    return this.lines.join('')
+    return this._lines.join('')
   }
 }

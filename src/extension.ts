@@ -13,6 +13,7 @@ var Graph = require('@dagrejs/graphlib').Graph
 const graphlib = require('@dagrejs/graphlib')
 import { Queue } from 'queue-typescript'
 import { MutexUtils } from './MutexUtils'
+import { ISection } from './ISection'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -26,10 +27,9 @@ export function activate(context: vscode.ExtensionContext) {
   let allConflictSections: ConflictSection[] = []
   // mutex lock
   const conflictSectionLock = new MutexUtils()
-  // map from uri: ISection[]
+  // TextSection around ConflictSection can provide conflict context information
+  let sectionsByFile = new Map<string, ISection[]>()
   let conflictSectionsByFile = new Map<string, ConflictSection[]>()
-  // TODO: make use of TextSection around ConflictSection for more information
-  // let sectionsByFile = new Map<string, ISection[]>()
   // let conflictSectionsByFile: { [key: string]: ISection[] } = {}
   let graph: typeof Graph | undefined = undefined
   let conflictIconPath: string = context.asAbsolutePath('media/alert.png')
@@ -268,7 +268,7 @@ export function activate(context: vscode.ExtensionContext) {
   async function scanConflictsInFolder(folder: vscode.WorkspaceFolder) {
     await conflictSectionLock.dispatch(async () => {
       if (allConflictSections.length == 0) {
-        conflictSectionsByFile = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
+        [sectionsByFile, conflictSectionsByFile] = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
 
         for (let conflictSections of conflictSectionsByFile.values()) {
           for (let section of conflictSections) {
@@ -313,7 +313,7 @@ export function activate(context: vscode.ExtensionContext) {
           return
         } else {
           // construct a graph to keep relations of conflicts
-          graph = SoManyConflicts.constructGraph(allConflictSections)
+          graph = SoManyConflicts.constructGraph(allConflictSections, sectionsByFile)
           if (graph == undefined) {
             message = 'Failed to construct the graph for conflicts.'
             vscode.window.showErrorMessage(message)

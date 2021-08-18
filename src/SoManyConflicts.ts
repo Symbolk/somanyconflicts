@@ -11,6 +11,9 @@ import * as TreeSitter from 'web-tree-sitter'
 import { Identifier } from './Identifier'
 import { Language, languages } from './Language'
 import { getStrategy, Strategy } from './Strategy'
+import { ISection } from './ISection'
+import { TextSection } from './TextSection'
+import { StringUtils } from './StringUtils'
 
 const treeSitterPromise = TreeSitter.init()
 
@@ -18,20 +21,23 @@ export class SoManyConflicts {
   /** singleton treesitter instances for different languages */
   private static queriers = new Map<Language, [TreeSitter, TreeSitter.Query]>()
 
-  public static scanConflictsInFile(absPath: string, content?: string): ConflictSection[] {
+  public static parseFile(absPath: string, content?: string): ISection[] {
     if (!content) {
       content = FileUtils.readFileContent(absPath)
     }
     let uri: vscode.Uri = vscode.Uri.file(absPath)
-    const conflictSections: ConflictSection[] = Parser.parse(uri, content).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
-    // conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
-
-    return conflictSections
+    const sections: ISection[] = Parser.parse(uri, content)
+    return sections
   }
 
-  public static async scanAllConflicts(workspace: string): Promise<Map<string, ConflictSection[]>> {
+  public static scanConflictsInFile(absPath: string, content?: string): ConflictSection[] {
+    return this.parseFile(absPath, content).filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
+  }
+
+  public static async scanAllConflicts(workspace: string): Promise<[Map<string, ISection[]>, Map<string, ConflictSection[]>]> {
     let message: string = ''
-    let sectionsByFile = new Map<string, ConflictSection[]>()
+    let conflictSectionsByFile = new Map<string, ConflictSection[]>()
+    let sectionsByFile = new Map<string, ISection[]>()
 
     // get all files in conflict state in the opened workspace
     try {
@@ -39,12 +45,14 @@ export class SoManyConflicts {
       if (filePaths.length === 0) {
         message = 'Found no conflicting files in the workspace!'
         vscode.window.showWarningMessage(message)
-        return sectionsByFile
+        return [sectionsByFile, conflictSectionsByFile]
       }
       for (const absPath of filePaths) {
         console.log('Start parsing ' + absPath)
         // scan and parse all conflict blocks
-        const conflictSections: ConflictSection[] = this.scanConflictsInFile(absPath)
+        const sections: ISection[] = this.parseFile(absPath)
+        const conflictSections: ConflictSection[] = sections.filter((sec) => sec instanceof ConflictSection) as ConflictSection[]
+        // conflictSections.forEach((conflictSection) => console.log(conflictSection.printLineRange()))
         let uri: vscode.Uri = vscode.Uri.file(absPath)
         let language: Language = FileUtils.detectLanguage(absPath)
 
@@ -63,13 +71,14 @@ export class SoManyConflicts {
           // AST: extract identifiers (def/use) to complement LSP results
           this.extractConflictingIdentifiers(conflict, language)
         }
-        sectionsByFile.set(uri.fsPath, conflictSections)
+        conflictSectionsByFile.set(uri.fsPath, conflictSections)
+        sectionsByFile.set(uri.fsPath, sections)
       }
     } catch (err) {
       vscode.window.showErrorMessage(err.message)
-      return sectionsByFile
+      return [sectionsByFile, conflictSectionsByFile]
     }
-    return sectionsByFile
+    return [sectionsByFile, conflictSectionsByFile]
   }
 
   private static async extractConflictingIdentifiers(conflict: Conflict, language: Language) {
@@ -87,7 +96,6 @@ export class SoManyConflicts {
 
     // store the tree sitter instance for later use
     if (!this.queriers.get(language)) {
-      // const specification = create()
       await this.initParser(language, queryString)
     }
     let instance = this.queriers.get(language)
@@ -125,7 +133,7 @@ export class SoManyConflicts {
     this.queriers.set(language, [parser, query])
   }
 
-  public static constructGraph(allConflictSections: ConflictSection[]) {
+  public static constructGraph(allConflictSections: ConflictSection[], sectionsByFile: Map<string, ISection[]>) {
     // let graph = new graphlib.Graph({ directed: true, multigraph: true })
     // let graph = new graphlib.Graph({ multigraph: true })
     let graph = new graphlib.Graph()
@@ -165,6 +173,39 @@ export class SoManyConflicts {
         }
       }
     }
+    for (let [k, v] of sectionsByFile) {
+      let size = v.length
+      for (i = 0; i < size; i++) {
+        if (v[i] instanceof ConflictSection) {
+          // for now only check nesting relation for neighboring conflicts
+          let cnt = 0 // simulate a stack, number of open braces (only for langs with braces)
+          let section1: ConflictSection = v[i] as ConflictSection
+          cnt += StringUtils.countOpenBraces(section1.conflict.base.lines)
+          if (cnt <= 0) {
+            continue
+          }
+          for (j = i + 1; j < size; j++) {
+            if (v[j] instanceof TextSection) {
+              cnt += StringUtils.countOpenBraces((v[j] as TextSection).lines)
+            } else if (v[j] instanceof ConflictSection) {
+              let section2: ConflictSection = v[j] as ConflictSection
+              cnt += StringUtils.countOpenBraces(section2.conflict.base.lines)
+              if (cnt > 0) {
+                let lastWeight = graph.edge(section1.index, section2.index)
+                if (lastWeight == null) {
+                  graph.setEdge(section1.index, section2.index, 1.0)
+                } else {
+                  graph.setEdge(section1.index, section2.index, lastWeight + 1.0)
+                }
+              }
+              break
+            }
+          }
+        }
+      }
+    }
+    // TODO: unify the weight of all edges to one, or use mutigrpah for visualization feature
+
     return graph
   }
 
@@ -259,7 +300,6 @@ export class SoManyConflicts {
   public static getConflictSectionByIndex(allConflictSections: ConflictSection[], index: number): ConflictSection {
     return allConflictSections[index]
   }
-
   private static async filterConflictingSymbols(conflict: Conflict, symbols: vscode.DocumentSymbol[]) {
     for (let symbol of symbols) {
       if (conflict.ours.range.contains(symbol.selectionRange)) {
