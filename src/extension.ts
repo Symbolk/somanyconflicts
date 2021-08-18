@@ -92,7 +92,7 @@ export function activate(context: vscode.ExtensionContext) {
                     'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display,
                   )
                   // TODO: only propagate to others if fully resolved
-                  if (changeLines.length == 0) {
+                  if (changeLines.length === 0) {
                     conflictSection.updateRangeWithoutComputing(
                       new vscode.Range(
                         new vscode.Position(conflictSection.conflict.range.start.line, 0),
@@ -143,12 +143,12 @@ export function activate(context: vscode.ExtensionContext) {
       if (oldConflictSections[i].hasResolved) {
         cnt += 1
         const start = oldConflictSections[i].conflict.range.start.line
-        const char_s = oldConflictSections[i].conflict.range.start.character
+        const charS = oldConflictSections[i].conflict.range.start.character
         const end = oldConflictSections[i].conflict.range.end.line
-        const char_e = oldConflictSections[i].conflict.range.end.character
+        const charE = oldConflictSections[i].conflict.range.end.character
         if (change.range.end.line < start) {
           oldConflictSections[i].updateRange(
-            new vscode.Range(new vscode.Position(start - changeLinesCnt, char_s), new vscode.Position(end - changeLinesCnt, char_e)),
+            new vscode.Range(new vscode.Position(start - changeLinesCnt, charS), new vscode.Position(end - changeLinesCnt, charE)),
           )
         }
       } else {
@@ -159,7 +159,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
     // }
 
-    conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
+    conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then(() => {
       allConflictTreeViewProvider.refresh()
     })
     await vscode.commands.executeCommand('somanyconflicts.start')
@@ -174,11 +174,11 @@ export function activate(context: vscode.ExtensionContext) {
       if (!isReady()) {
         await init()
       }
-      if (allConflictSections.length == 0) {
+      if (allConflictSections.length === 0) {
         vscode.window.showWarningMessage('Found no merge conflicts in the current workspace!')
       } else {
         conflictSectionLock.dispatch(async () => {
-          await conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then((res) => {
+          await conflictSectionsToTreeItem(allConflictSections, allConflictTreeRoot).then(() => {
             allConflictTreeViewProvider.refresh()
             vscode.commands.executeCommand('allConflictTreeView.focus')
           })
@@ -207,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 
           const groupedConflictSections: ConflictSection[][] = SoManyConflicts.suggestStartingPoint(allConflictSections, graph)
           conflictSectionLock.dispatch(async () => {
-            await suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then((res) => {
+            await suggestionsToTreeItem(groupedConflictSections, suggestedConflictTreeRoot).then(() => {
               suggestedConflictTreeViewProvider.refresh()
               vscode.commands.executeCommand('suggestedConflictTreeView.focus')
             })
@@ -262,12 +262,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   // check if the workspace is readily prepared
   function isReady(): boolean {
-    return allConflictSections.length != 0 && graph && graph !== undefined
+    return allConflictSections.length !== 0 && graph && graph !== undefined
   }
 
   async function scanConflictsInFolder(folder: vscode.WorkspaceFolder) {
     await conflictSectionLock.dispatch(async () => {
-      if (allConflictSections.length == 0) {
+      if (allConflictSections.length === 0) {
         [sectionsByFile, conflictSectionsByFile] = await SoManyConflicts.scanAllConflicts(folder.uri.fsPath)
 
         for (const conflictSections of conflictSectionsByFile.values()) {
@@ -307,14 +307,14 @@ export function activate(context: vscode.ExtensionContext) {
 
         await Promise.all(workspaceFolders.map(scanConflictsInFolder))
 
-        if (allConflictSections.length == 0) {
+        if (allConflictSections.length === 0) {
           message = 'Found no merge conflicts in the current workspace!'
           vscode.window.showWarningMessage(message)
           return
         } else {
           // construct a graph to keep relations of conflicts
           graph = SoManyConflicts.constructGraph(allConflictSections, sectionsByFile)
-          if (graph == undefined) {
+          if (!graph) {
             message = 'Failed to construct the graph for conflicts.'
             vscode.window.showErrorMessage(message)
             return
@@ -328,9 +328,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   function propagateStrategy(section: ConflictSection) {
-    if (!graph || graph == undefined) {
-      return
-    }
+    if (!graph) return
 
     let strategiesProb: Array<number> = new Array<number>(6).fill(0)
     if (section.hasResolved) {
@@ -352,12 +350,12 @@ export function activate(context: vscode.ExtensionContext) {
           for (const e of edges) {
             if (!visited.has(e.v)) {
               const conflictSection = allConflictSections[e.v]
-              const newProbs = conflictSection.updateStrategy(strategiesProb, graph.edge(e))
+              conflictSection.updateStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.v)
             }
             if (!visited.has(e.w)) {
               const conflictSection = allConflictSections[e.w]
-              const newProbs = conflictSection.updateStrategy(strategiesProb, graph.edge(e))
+              conflictSection.updateStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.w)
             }
           }
@@ -368,9 +366,7 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   function reversePropagateStrategy(section: ConflictSection) {
-    if (!graph || graph == undefined) {
-      return
-    }
+    if (!graph) return
 
     let strategiesProb: Array<number> = new Array<number>(6).fill(0)
     if (section.hasResolved) {
@@ -392,12 +388,12 @@ export function activate(context: vscode.ExtensionContext) {
           for (const e of edges) {
             if (!visited.has(e.v)) {
               const conflictSection = allConflictSections[e.v]
-              const newProbs = conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
+              conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.v)
             }
             if (!visited.has(e.w)) {
               const conflictSection = allConflictSections[e.w]
-              const newProbs = conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
+              conflictSection.reverseUpdatedStrategy(strategiesProb, graph.edge(e))
               queue.enqueue(e.w)
             }
           }
@@ -412,7 +408,7 @@ export function activate(context: vscode.ExtensionContext) {
       // match the conflict and get its index
       for (const i in allConflictSections) {
         const conflict = allConflictSections[i].conflict
-        if (conflict.uri?.path == invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
+        if (conflict.uri?.path === invokedConflict.uri?.path && conflict.range.isEqual(invokedConflict.range)) {
           // currently use array index as index, but can be extended (like fileIndex:conflictIndex)
           return +allConflictSections[i].index
         }
@@ -437,7 +433,7 @@ export function deactivate() {}
 function addSubcommandOpenFile(context: vscode.ExtensionContext) {
   const commandsToOpenFiles = 'somanyconflicts.openFileAt'
   const openFileHandler = async function (uri: vscode.Uri, range: vscode.Range) {
-    await vscode.commands.executeCommand('vscode.open', uri).then((x) => {
+    await vscode.commands.executeCommand('vscode.open', uri).then(() => {
       const activeEditor = vscode.window.activeTextEditor
       if (activeEditor) {
         activeEditor.revealRange(range, vscode.TextEditorRevealType.InCenter)

@@ -173,7 +173,7 @@ export class SoManyConflicts {
         }
       }
     }
-    for (const [k, v] of sectionsByFile) {
+    for (const [, v] of sectionsByFile) {
       const size = v.length
       for (i = 0; i < size; i++) {
         if (v[i] instanceof ConflictSection) {

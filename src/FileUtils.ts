@@ -1,17 +1,14 @@
 import simpleGit, {
   CheckRepoActions,
   SimpleGit,
-  StatusResult,
 } from 'simple-git'
 import {
   readdirSync,
-  readFile,
   readFileSync,
   statSync,
   promises as fs,
 } from 'fs'
 import path = require('path')
-import util = require('util')
 import { Constants } from './Constants'
 import { Language } from './Language'
 

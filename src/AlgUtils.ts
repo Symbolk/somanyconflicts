@@ -31,7 +31,7 @@ export class AlgUtils {
 
   public static compareLineByLine(lines1: string[], lines2: string[]): number {
     const minLength = Math.min(lines1.length, lines2.length)
-    if (minLength == 0) {
+    if (minLength === 0) {
       return 0
     }
     let similarity = 0.0

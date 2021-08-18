@@ -7,7 +7,7 @@ export class ConflictLensProvider implements vscode.CodeLensProvider {
     document: vscode.TextDocument,
 
     token: vscode.CancellationToken,
-  ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
+  ): vscode.CodeLens[] | Promise<vscode.CodeLens[]> {
     const codeLenses: vscode.CodeLens[] = []
     const conflictSections: ConflictSection[] = Parser.parse(document.uri, document.getText()).filter(
       (sec) => sec instanceof ConflictSection,

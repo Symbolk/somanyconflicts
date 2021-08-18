@@ -1,5 +1,3 @@
-'use strict'
-
 import { AlgUtils } from './AlgUtils'
 import { Conflict } from './Conflict'
 import { ISection } from './ISection'
@@ -69,7 +67,7 @@ export class ConflictSection implements ISection {
     // compare the new text with each side and combination to check the strategy (trimmed line by line)
     let lines: string[] = newText.split(/\r\n|\r|\n/)
     lines = lines.filter((line) => line.trim().length > 0)
-    if (lines.length == 0) {
+    if (lines.length === 0) {
       this._hasResolved = true
       this._stragegy = Strategy.AcceptNone
       return
@@ -80,7 +78,7 @@ export class ConflictSection implements ISection {
     let theirText: string[], baseText: string[]
 
     let simi = AlgUtils.compareLineByLine([newText], ourText)
-    if (simi == 1.0) {
+    if (simi === 1.0) {
       this._resolvedCode = newText
       this._hasResolved = true
       this._stragegy = Strategy.AcceptOurs
@@ -89,7 +87,7 @@ export class ConflictSection implements ISection {
       similarities.push(simi)
       theirText = [this.conflict.theirs.lines.join('')]
       simi = AlgUtils.compareLineByLine([newText], theirText)
-      if (simi == 1.0) {
+      if (simi === 1.0) {
         this._resolvedCode = newText
         this._hasResolved = true
         this._stragegy = Strategy.AcceptTheirs
@@ -98,7 +96,7 @@ export class ConflictSection implements ISection {
         similarities.push(simi)
         baseText = [this.conflict.base.lines.join('')]
         simi = AlgUtils.compareLineByLine([newText], baseText)
-        if (simi == 1.0) {
+        if (simi === 1.0) {
           this._resolvedCode = newText
           this._hasResolved = true
           this._stragegy = Strategy.AcceptBase
@@ -107,7 +105,7 @@ export class ConflictSection implements ISection {
           similarities.push(simi)
           const bothText: string[] = [ourText[0] + theirText[0]]
           simi = AlgUtils.compareLineByLine([newText], bothText)
-          if (simi == 1.0) {
+          if (simi === 1.0) {
             this._resolvedCode = newText
             this._hasResolved = true
             this._stragegy = Strategy.AcceptBoth
@@ -119,7 +117,6 @@ export class ConflictSection implements ISection {
       }
     }
     // if none match, save similarities
-    const i = 0
     const idx = similarities.reduce((maxIndex, x, i, arr) => (x.toFixed(4) > arr[maxIndex].toFixed(4) ? i : maxIndex), 0)
     switch (idx) {
       case (0): {
@@ -154,7 +151,7 @@ export class ConflictSection implements ISection {
     }
     const sum = this._strategiesProb.reduce((a, b) => a + b, 0)
 
-    if (sum != 0) {
+    if (sum !== 0) {
       for (const i in this._strategiesProb) {
         this._strategiesProb[i] = +(this._strategiesProb[i] / sum)
       }
@@ -166,7 +163,7 @@ export class ConflictSection implements ISection {
   public reverseUpdatedStrategy(probs: Array<number>, weight: number): Array<number> {
     const newProbs = probs.map((p) => p * weight)
     const sum = newProbs.reduce((a, b) => a + b, 0)
-    if (sum != 0) {
+    if (sum !== 0) {
       for (const i in this._strategiesProb) {
         this._strategiesProb[i] = this._strategiesProb[i] * (1 + weight) - newProbs[i]
       }

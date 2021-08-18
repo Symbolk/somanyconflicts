@@ -1,5 +1,3 @@
-'use strict'
-
 import { Uri } from 'vscode'
 import { Conflict } from './Conflict'
 import { ConflictSection } from './ConflictSection'
@@ -7,6 +5,13 @@ import { Constants } from './Constants'
 import { ISection } from './ISection'
 import { StringUtils, StartsWithResult } from './StringUtils'
 import { TextSection } from './TextSection'
+
+export enum ParserState {
+  OutsideConflict,
+  Ours,
+  Base,
+  Theirs,
+}
 
 export class Parser {
   public static parse(uri: Uri, text: string): ISection[] {
@@ -141,11 +146,4 @@ export class Parser {
 
     return lines
   }
-}
-
-const enum ParserState {
-  OutsideConflict,
-  Ours,
-  Base,
-  Theirs,
 }

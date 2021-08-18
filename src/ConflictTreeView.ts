@@ -1,5 +1,4 @@
 import { ConflictSection } from './ConflictSection'
-import { ISection } from './ISection'
 import * as vscode from 'vscode'
 
 export class ConflictTreeViewProvider implements vscode.TreeDataProvider<ConflictTreeItem> {
@@ -18,7 +17,7 @@ export class ConflictTreeViewProvider implements vscode.TreeDataProvider<Conflic
           arguments: [item.uri, item.range],
         },
         collapsibleState: vscode.TreeItemCollapsibleState.None,
-        iconPath: item.state == -1 ? this.conflictIconPath : this.resolvedIconPath,
+        iconPath: item.state === -1 ? this.conflictIconPath : this.resolvedIconPath,
       }
     } else if (item.uri) {
       return {
@@ -33,7 +32,7 @@ export class ConflictTreeViewProvider implements vscode.TreeDataProvider<Conflic
     }
   }
 
-  getChildren(element?: ConflictTreeItem): Thenable<ConflictTreeItem[]> {
+  getChildren(element?: ConflictTreeItem): Promise<ConflictTreeItem[]> {
     if (element) {
       return Promise.resolve(element.children)
     } else {
@@ -83,7 +82,7 @@ export async function conflictSectionsToTreeItem(allConflictSections: ConflictSe
     const newConflict = new ConflictTreeItem(label, conflict.uri, conflict.range, [], vscode.TreeItemCollapsibleState.None, conflictSection.hasResolved ? ConflictTreeItemState.resolved : ConflictTreeItemState.conflicting)
     let flag = false
     for (const parent of parents) {
-      if (newConflict.uri == parent.uri) {
+      if (newConflict.uri === parent.uri) {
         parent.children.push(newConflict)
         flag = true
         break
