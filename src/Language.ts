@@ -1,5 +1,3 @@
-'use strict'
-
 export const languages = {
   Java: {
     queryString: `

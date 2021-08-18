@@ -28,7 +28,7 @@ export class ConflictTreeViewProvider implements vscode.TreeDataProvider<Conflic
     } else if (item.label) {
       return new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.Expanded)
     } else {
-      throw 'data error'
+      throw new Error('data error')
     }
   }
 

@@ -1,5 +1,3 @@
-'use strict'
-
 // resolution stratety
 
 export const Strategy = {

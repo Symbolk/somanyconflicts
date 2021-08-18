@@ -1,5 +1,3 @@
-'use strict'
-
 import { ISection } from './ISection'
 
 export class TextSection implements ISection {

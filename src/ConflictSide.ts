@@ -1,8 +1,7 @@
-'use strict'
-
 import { Symbol } from './Symbol'
 import { Range, Position } from 'vscode'
 import { Identifier } from './Identifier'
+
 export class ConflictSide {
   private _lines: string[]
   private _range: Range
