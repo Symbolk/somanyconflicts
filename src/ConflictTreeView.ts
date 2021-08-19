@@ -101,7 +101,7 @@ export async function suggestionsToTreeItem(suggestions: ConflictSection[][], pa
   parents.length = 0
   for (const group of suggestions) {
     idx++
-    const groupRoot = new ConflictTreeItem('Group' + idx, undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded, 0)
+    const groupRoot = new ConflictTreeItem('Group' + idx + ' (' + group.length + ')', undefined, undefined, [], vscode.TreeItemCollapsibleState.Expanded, 0)
     for (const conflictSection of group) {
       const doc = await vscode.workspace.openTextDocument(conflictSection.conflict.uri!)
       const conflict = conflictSection.conflict

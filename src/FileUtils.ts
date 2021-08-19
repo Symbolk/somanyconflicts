@@ -121,4 +121,8 @@ export class FileUtils {
 
     return fileList
   }
+
+  public static getFileNameFromPath(filePath: string): string {
+    return path.basename(filePath)
+  }
 }
