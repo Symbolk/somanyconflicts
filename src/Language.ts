@@ -1,5 +1,3 @@
-'use strict'
-
 export const languages = {
   Java: {
     queryString: `
@@ -59,8 +57,8 @@ export const languages = {
     queryString: `
       (comment) @comment
       (class_declaration 
-      	name: [
-	        (type_identifier) @type-def
+        name: [
+          (type_identifier) @type-def
           (identifier) @type-def
       ])
       (type_alias_declaration name: (type_identifier) @type-def)
@@ -126,7 +124,7 @@ export const languages = {
     `,
   },
   Unknown: {
-    queryString: ``,
+    queryString: '',
   },
 } as const
 

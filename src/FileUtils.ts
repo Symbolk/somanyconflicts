@@ -1,23 +1,20 @@
 import simpleGit, {
   CheckRepoActions,
   SimpleGit,
-  StatusResult,
 } from 'simple-git'
 import {
   readdirSync,
-  readFile,
   readFileSync,
   statSync,
   promises as fs,
 } from 'fs'
 import path = require('path')
-import util = require('util')
 import { Constants } from './Constants'
 import { Language } from './Language'
 
 export class FileUtils {
   public static detectLanguage(path: string): Language {
-    let extension: string | undefined = path.split('.').pop()
+    const extension: string | undefined = path.split('.').pop()
     switch (extension) {
       case undefined:
         return 'Unknown'
@@ -41,14 +38,14 @@ export class FileUtils {
 
   /**
    * Get the absolute path of conflicting files
-   * @param directory 
-   * @returns 
+   * @param directory
+   * @returns
    */
   public static async getConflictingFilePaths(
-    directory: string
+    directory: string,
   ): Promise<string[]> {
     const git: SimpleGit = simpleGit(directory)
-    let res = await git.checkIsRepo(CheckRepoActions.IS_REPO_ROOT)
+    const res = await git.checkIsRepo(CheckRepoActions.IS_REPO_ROOT)
     if (res) {
       // check conflicting status also?
       // const status: StatusResult = await git.status();
@@ -61,25 +58,25 @@ export class FileUtils {
             if (err) {
               reject(err)
             } else {
-              let filePaths: string[] = result.split(/\r\n|\r|\n/)
+              const filePaths: string[] = result.split(/\r\n|\r|\n/)
               resolve(
                 filePaths
                   .filter((s) => s.length > 0)
-                  .map((filePath) => path.join(directory, filePath))
+                  .map((filePath) => path.join(directory, filePath)),
               )
             }
-          }
+          },
         )
       })
     } else {
       // case2: a normal folder
       console.log('Working under a normal directory: ' + directory)
-      let conflictingFilePaths: string[] = []
+      const conflictingFilePaths: string[] = []
       // filter conflicting files
       // let filePaths: string[] = await this.listFilePaths(directory)
-      let filePaths: string[] = this.listFilePathsSync(directory)
-      for (let filePath of filePaths) {
-        let content = this.readFileContent(filePath)
+      const filePaths: string[] = this.listFilePathsSync(directory)
+      for (const filePath of filePaths) {
+        const content = this.readFileContent(filePath)
         if (content.includes(Constants.conflictMarkerOurs)) {
           conflictingFilePaths.push(filePath)
         }

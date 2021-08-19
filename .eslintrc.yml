@@ -1,0 +1,53 @@
+root: true
+
+parser: '@typescript-eslint/parser'
+
+settings:
+  import/parsers:
+    '@typescript-eslint/parser': ['.ts']
+
+env:
+  node: true
+  mocha: true
+  es2020: true
+
+extends:
+  - standard
+
+plugins:
+  - mocha
+  - '@typescript-eslint'
+
+rules:
+  comma-dangle:
+    - warn
+    - always-multiline
+
+  no-redeclare: off
+
+  no-unused-vars: off
+  '@typescript-eslint/no-unused-vars':
+    - error
+    - args: none
+
+  no-use-before-define: off
+
+  no-useless-constructor: off
+  '@typescript-eslint/no-useless-constructor': error
+
+  semi: off
+  '@typescript-eslint/semi':
+    - error
+    - never
+  '@typescript-eslint/member-delimiter-style':
+    - error
+    - multiline:
+        delimiter: none
+
+  space-before-function-paren: off
+  '@typescript-eslint/space-before-function-paren':
+    - error
+    - anonymous: always
+      asyncArrow: always
+      named: never
+  '@typescript-eslint/type-annotation-spacing': error

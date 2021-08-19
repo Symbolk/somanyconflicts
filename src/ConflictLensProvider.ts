@@ -6,11 +6,11 @@ export class ConflictLensProvider implements vscode.CodeLensProvider {
   public provideCodeLenses(
     document: vscode.TextDocument,
 
-    token: vscode.CancellationToken
-  ): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
-    let codeLenses: vscode.CodeLens[] = []
-    let conflictSections: ConflictSection[] = Parser.parse(document.uri, document.getText()).filter(
-      (sec) => sec instanceof ConflictSection
+    token: vscode.CancellationToken,
+  ): vscode.CodeLens[] | Promise<vscode.CodeLens[]> {
+    const codeLenses: vscode.CodeLens[] = []
+    const conflictSections: ConflictSection[] = Parser.parse(document.uri, document.getText()).filter(
+      (sec) => sec instanceof ConflictSection,
     ) as ConflictSection[]
     const conflictsCount = conflictSections?.length ?? 0
 
@@ -20,15 +20,15 @@ export class ConflictLensProvider implements vscode.CodeLensProvider {
 
     // generate code lens for all conflict sections
     conflictSections.forEach((conflictSection) => {
-      let nextCommand: vscode.Command = {
+      const nextCommand: vscode.Command = {
         command: 'somanyconflicts.next',
         title: 'Show Related Conflicts',
         arguments: ['current-conflict', conflictSection.conflict],
       }
-      let range: vscode.Range = conflictSection.conflict.range
+      const range: vscode.Range = conflictSection.conflict.range
       codeLenses.push(new vscode.CodeLens(range, nextCommand))
 
-      let strategyCommand: vscode.Command = {
+      const strategyCommand: vscode.Command = {
         command: 'somanyconflicts.how',
         title: 'Recommend Resolution Strategy',
         arguments: ['current-conflict', conflictSection.conflict],

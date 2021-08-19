@@ -1,5 +1,3 @@
-'use strict'
-
 export class StringUtils {
   public static startsWith(thisText: string, otherText: string): StartsWithResult {
     if (thisText.startsWith(otherText)) {

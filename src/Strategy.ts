@@ -1,5 +1,3 @@
-'use strict'
-
 // resolution stratety
 
 export const Strategy = {
@@ -8,16 +6,16 @@ export const Strategy = {
   AcceptTheirs: { index: 2, display: 'Accept Incoming' },
   AcceptBase: { index: 3, display: 'Accept Base' },
   AcceptBoth: { index: 4, display: 'Accept Both' },
-  AcceptNone: { index: 5, display: 'Accept None' }
+  AcceptNone: { index: 5, display: 'Accept None' },
 }
 
 export type Strategy = typeof Strategy[keyof typeof Strategy]
 
 export function getStrategy(probs: Array<number>) {
-  let maxIndex = probs.reduce((iMax, x, i, arr) => (x.toFixed(4) > arr[iMax].toFixed(4) ? i : iMax), 0)
+  const maxIndex = probs.reduce((iMax, x, i, arr) => (x.toFixed(4) > arr[iMax].toFixed(4) ? i : iMax), 0)
   let k: keyof typeof Strategy
   for (k in Strategy) {
-    if (Strategy[k].index == maxIndex) {
+    if (Strategy[k].index === maxIndex) {
       return Strategy[k]
     }
   }

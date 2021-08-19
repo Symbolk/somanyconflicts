@@ -1,5 +1,3 @@
-'use strict'
-
 import { Uri, Position, Range } from 'vscode'
 import { ConflictSide } from './ConflictSide'
 import { Constants } from './Constants'
@@ -33,11 +31,11 @@ export class Conflict {
   public getSqueezedText(): string {
     const minNumberOfLines: number = Math.min(
       this._ours.lines.length,
-      this._theirs.lines.length
+      this._theirs.lines.length,
     )
     const maxNumberOfLines: number = Math.max(
       this._ours.lines.length,
-      this._theirs.lines.length
+      this._theirs.lines.length,
     )
 
     // Top cursor will contain the number of identical lines from the top.
@@ -74,7 +72,7 @@ export class Conflict {
 
     const identicalBottomLines: string[] = this._ours.lines.slice(
       this._ours.lines.length - bottomCursor,
-      this._ours.lines.length
+      this._ours.lines.length,
     )
 
     let parts: string[]
@@ -84,12 +82,12 @@ export class Conflict {
     } else {
       const ourNonIdenticalLines: string[] = this._ours.lines.slice(
         topCursor,
-        this._ours.lines.length - bottomCursor
+        this._ours.lines.length - bottomCursor,
       )
 
       const theirNonIdenticalLines: string[] = this._theirs.lines.slice(
         topCursor,
-        this._theirs.lines.length - bottomCursor
+        this._theirs.lines.length - bottomCursor,
       )
 
       let baseParts: string[]
@@ -160,26 +158,26 @@ export class Conflict {
 
   public computeRanges(startLine: number, endLine: number) {
     // line numbers start from 0, and do not include conflict markers
-    let oursEndLine = startLine + 1 + this._ours.lines.length - 1
+    const oursEndLine = startLine + 1 + this._ours.lines.length - 1
     this._ours.range = new Range(
       new Position(startLine + 1, 0),
       new Position(
         oursEndLine,
         this._ours.lines.length > 0
           ? this._ours.lines[this._ours.lines.length - 1].length - 1
-          : 0
-      )
+          : 0,
+      ),
     )
     if (this.hasBase) {
-      let orgEndLine = oursEndLine + 1 + this._base.lines.length
+      const orgEndLine = oursEndLine + 1 + this._base.lines.length
       this._base.range = new Range(
         new Position(oursEndLine + 2, 0),
         new Position(
           orgEndLine,
           this._base.lines.length > 0
             ? this._base.lines[this._base.lines.length - 1].length - 1
-            : 0
-        )
+            : 0,
+        ),
       )
       this._theirs.range = new Range(
         new Position(orgEndLine + 2, 0),
@@ -187,8 +185,8 @@ export class Conflict {
           endLine - 1,
           this._theirs.lines.length > 0
             ? this._theirs.lines[this._theirs.lines.length - 1].length - 1
-            : 0
-        )
+            : 0,
+        ),
       )
     } else {
       this._theirs.range = new Range(
@@ -197,8 +195,8 @@ export class Conflict {
           endLine - 1,
           this._theirs.lines.length > 0
             ? this._theirs.lines[this._theirs.lines.length - 1].length - 1
-            : 0
-        )
+            : 0,
+        ),
       )
     }
 
@@ -209,8 +207,8 @@ export class Conflict {
         Constants.conflictMarkerEnd.length +
           (this.textAfterMarkerEnd === undefined
             ? 0
-            : this.textAfterMarkerEnd.length)
-      )
+            : this.textAfterMarkerEnd.length),
+      ),
     )
   }
 }
