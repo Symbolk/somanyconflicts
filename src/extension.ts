@@ -165,12 +165,36 @@ export function activate(context: vscode.ExtensionContext) {
     await vscode.commands.executeCommand('somanyconflicts.start')
   }
 
+  // refresh both views and rerun both commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('somanyconflicts.refresh', async () => {
+      allConflictSections.length = 0
+      conflictSectionsByFile = new Map<string, ConflictSection[]>()
+      graph = undefined
+      await conflictSectionsToTreeItem([], []).then(() => {
+        allConflictTreeViewProvider.refresh()
+      })
+      await suggestionsToTreeItem([], []).then(() => {
+        suggestedConflictTreeViewProvider.refresh()
+      })
+      await vscode.commands.executeCommand('somanyconflicts.scan')
+      await vscode.commands.executeCommand('somanyconflicts.start')
+    })
+  )
+
   // init: scan all conflicts in the current workspace
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.scan', async () => {
       allConflictSections.length = 0
       conflictSectionsByFile = new Map<string, ConflictSection[]>()
       graph = undefined
+      await conflictSectionsToTreeItem([], []).then(() => {
+        allConflictTreeViewProvider.refresh()
+      })
+      await suggestionsToTreeItem([], []).then(() => {
+        suggestedConflictTreeViewProvider.refresh()
+      })
+
       if (!isReady()) {
         await init()
       }

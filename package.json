@@ -27,6 +27,7 @@
   "activationEvents": [
     "onCommand:somanyconflicts.scan",
     "onCommand:somanyconflicts.start",
+    "onCommand:somanyconflicts.refresh",
     "onCommand:somanyconflicts.next",
     "onCommand:somanyconflicts.how",
     "onView:suggestedConflictTreeView",
@@ -82,12 +83,12 @@
     "menus": {
       "view/title": [
         {
-          "command": "somanyconflicts.start",
+          "command": "somanyconflicts.refresh",
           "when": "view == suggestedConflictTreeView",
           "group": "navigation@10"
         },
         {
-          "command": "somanyconflicts.scan",
+          "command": "somanyconflicts.refresh",
           "when": "view == allConflictTreeView",
           "group": "navigation@10"
         }
@@ -106,12 +107,15 @@
     "commands": [
       {
         "command": "somanyconflicts.scan",
-        "title": "So Many Conflicts: Scan All Merge Conflicts",
-        "icon": "$(refresh)"
+        "title": "So Many Conflicts: Scan All Merge Conflicts"
       },
       {
         "command": "somanyconflicts.start",
-        "title": "So Many Conflicts: Where to Start Resolving?",
+        "title": "So Many Conflicts: Where to Start Resolving?"
+      },
+      {
+        "command": "somanyconflicts.refresh",
+        "title": "So Many Conflicts: Refresh all Results",
         "icon": "$(refresh)"
       },
       {
