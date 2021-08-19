@@ -322,13 +322,6 @@ export function activate(context: vscode.ExtensionContext) {
         token.onCancellationRequested(() => {
           console.log('User canceled the scanning.')
         })
-
-        // progress.report({ increment: 0 })
-
-        // setTimeout(() => {
-        //   progress.report({ increment: 10 })
-        // }, 1000)
-
         await Promise.all(workspaceFolders.map(scanConflictsInFolder))
 
         if (allConflictSections.length === 0) {
@@ -344,10 +337,26 @@ export function activate(context: vscode.ExtensionContext) {
             return
           }
         }
-        message = 'Found ' + allConflictSections.length + ' conflicts in total in the current workspace.'
-        vscode.window.showInformationMessage(message)
-        progress.report({ increment: 100 })
+        showNotification('Reamining ' + allConflictSections.length + ' conflicts in the current workspace.')
+        // progress.report({ increment: 100 })
+      }
+    )
+  }
+
+  function showNotification(title: string) {
+    vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: title,
+        cancellable: false,
       },
+      async (progress, token) => {
+        for (let i = 0; i < 10; i++) {
+          setTimeout(() => {
+            progress.report({ increment: i*10, message: title })
+          }, 10000)
+        }
+      }
     )
   }
 
