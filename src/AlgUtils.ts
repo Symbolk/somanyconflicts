@@ -4,6 +4,7 @@ const jaccard = require('jaccard')
 const stringSimilarity = require('string-similarity')
 
 export class AlgUtils {
+  // compute dependency strength for two conflicts (+ from 1 to 2 (or 1>2), - from 2 to 1(or 2>1))
   public static computeDependency(conflict1: Conflict, conflict2: Conflict): number {
     // for each side, estimate and sum relevance
     const sum =

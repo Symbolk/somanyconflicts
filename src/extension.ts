@@ -89,22 +89,22 @@ export function activate(context: vscode.ExtensionContext) {
                   // compare text line by line to update the strategy prob
                   conflictSection.checkStrategy(change.text)
                   console.log(
-                    'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display,
+                    'Manually resolved: ' + conflictSection.conflict.uri?.fsPath + conflictSection.printLineRange() + ' via ' + conflictSection.stragegy.display
                   )
                   // TODO: only propagate to others if fully resolved
                   if (changeLines.length === 0) {
                     conflictSection.updateRangeWithoutComputing(
                       new vscode.Range(
                         new vscode.Position(conflictSection.conflict.range.start.line, 0),
-                        new vscode.Position(conflictSection.conflict.range.start.line, 0),
-                      ),
+                        new vscode.Position(conflictSection.conflict.range.start.line, 0)
+                      )
                     )
                   } else {
                     conflictSection.updateRange(
                       new vscode.Range(
                         new vscode.Position(conflictSection.conflict.range.start.line, 0),
-                        new vscode.Position(conflictSection.conflict.range.start.line + changeLines.length - 1, 0),
-                      ),
+                        new vscode.Position(conflictSection.conflict.range.start.line + changeLines.length - 1, 0)
+                      )
                     )
                   }
                   propagateStrategy(conflictSection)
@@ -123,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
     fsPath: string,
     oldConflictSections: ConflictSection[],
     change: vscode.TextDocumentContentChangeEvent,
-    afterChangeLinesCnt: number,
+    afterChangeLinesCnt: number
   ) {
     // let newSections: ConflictSection[] = SoManyConflicts.scanConflictsInFile(fsPath) // latent for auto-saving
     let newSections: ConflictSection[] = []
@@ -148,7 +148,7 @@ export function activate(context: vscode.ExtensionContext) {
         const charE = oldConflictSections[i].conflict.range.end.character
         if (change.range.end.line < start) {
           oldConflictSections[i].updateRange(
-            new vscode.Range(new vscode.Position(start - changeLinesCnt, charS), new vscode.Position(end - changeLinesCnt, charE)),
+            new vscode.Range(new vscode.Position(start - changeLinesCnt, charS), new vscode.Position(end - changeLinesCnt, charE))
           )
         }
       } else {
@@ -208,11 +208,11 @@ export function activate(context: vscode.ExtensionContext) {
           })
         })
       }
-    }),
+    })
   )
 
   // feature1: topo-sort for the optimal order to resolve conflicts
-  // TODO: call when activated
+  // TODO: call automatically when activated
   context.subscriptions.push(
     vscode.commands.registerCommand('somanyconflicts.start', async () => {
       if (!isReady()) {
@@ -237,9 +237,9 @@ export function activate(context: vscode.ExtensionContext) {
             })
           })
           progress.report({ increment: 100 })
-        },
+        }
       )
-    }),
+    })
   )
 
   const codeLensProviderDisposable = vscode.languages.registerCodeLensProvider('*', new ConflictLensProvider())
@@ -261,7 +261,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
       // locate the focusing conflict and start from it
       SoManyConflicts.suggestRelatedConflicts(allConflictSections, conflictIndex, graph)
-    }),
+    })
   )
 
   // feature3: recommend resolution strategy given conflict resolved before
@@ -281,7 +281,7 @@ export function activate(context: vscode.ExtensionContext) {
       // query previously resolved related conflicts
       // suggest resolution strategy accordingly
       SoManyConflicts.suggestResolutionStrategy(allConflictSections, conflictIndex, decorationType)
-    }),
+    })
   )
 
   // check if the workspace is readily prepared
@@ -353,7 +353,7 @@ export function activate(context: vscode.ExtensionContext) {
       async (progress, token) => {
         for (let i = 0; i < 10; i++) {
           setTimeout(() => {
-            progress.report({ increment: i*10, message: title })
+            progress.report({ increment: i * 10, message: title })
           }, 10000)
         }
       }

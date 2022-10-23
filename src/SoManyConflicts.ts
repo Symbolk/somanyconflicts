@@ -74,7 +74,7 @@ export class SoManyConflicts {
         conflictSectionsByFile.set(uri.fsPath, conflictSections)
         sectionsByFile.set(uri.fsPath, sections)
       }
-    } catch (err) {
+    } catch (err: any) {
       vscode.window.showErrorMessage(err.message)
       return [sectionsByFile, conflictSectionsByFile]
     }
@@ -136,6 +136,7 @@ export class SoManyConflicts {
   public static constructGraph(allConflictSections: ConflictSection[], sectionsByFile: Map<string, ISection[]>) {
     // let graph = new graphlib.Graph({ directed: true, multigraph: true })
     // let graph = new graphlib.Graph({ multigraph: true })
+    // graph persistence: JSON.stringify(graphlib.json.write(g)); graphlib.json.read(JSON.parse(str));
     const graph = new graphlib.Graph()
 
     // construct graph nodes
@@ -151,6 +152,7 @@ export class SoManyConflicts {
       const conflict1: Conflict = allConflictSections[i].conflict
       const index1 = allConflictSections[i].index
       for (j = i + 1; j < allConflictSections.length; ++j) {
+        // token of tf-idf
         const conflict2: Conflict = allConflictSections[j].conflict
         const index2 = allConflictSections[j].index
         const dependency = AlgUtils.computeDependency(conflict1, conflict2)
@@ -284,7 +286,12 @@ export class SoManyConflicts {
   public static suggestRelatedConflicts(allConflictSections: ConflictSection[], conflictIndex: number, graph: any) {
     const focusedConflict: Conflict = this.getConflictByIndex(allConflictSections, conflictIndex)
     const locations: vscode.Location[] = []
+    // all edges connected with this
     const edges = graph.nodeEdges(conflictIndex)
+    // all nodes starting from this
+    // graplib.alg.preorder(graph, conflictIndex)
+    // all nodes ending to this
+    // graplib.alg.postorder(graph, conflictIndex)
     if (edges) {
       for (const edge of edges) {
         if (!isNaN(+edge.v)) {

@@ -145,6 +145,8 @@ export class ConflictSection implements ISection {
 
   public updateStrategy(probs: Array<number>, weight: number): Array<number> {
     // avg (prob*weight) + self.prob
+    // TODO: average multiple edges
+    // recall > precision
     const newProbs = probs.map((p) => p * weight)
     for (const i in newProbs) {
       this._strategiesProb[i] += newProbs[i]
