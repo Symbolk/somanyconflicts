@@ -63,7 +63,7 @@
 ### Instructions
 
 #### Under macOS (Recommended)
-0. Install XCode command line tools:
+1. Install XCode command line tools:
 ```sh
 xcode-select --install
 ```
@@ -92,11 +92,11 @@ npm install --global windows-build-tools
 ```
 [windows-build-tools]: https://www.npmjs.com/package/windows-build-tools
 
-1. Clone repo and open in VSCode.
-2. Open the terminal, install Emscripten (the compiler toolchain to WebAssembly): https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install
-3. In the same terminal and under the project root, run `yarn` or `npm i` to download dependencies.
-4. Press `F5` to run and debug extension.
-5. In the new window, press `F1` or `Ctrl+Shift+P` and invoke command `somany`.
+2. Clone repo and open in VSCode.
+3. Open the terminal, install Emscripten (the compiler toolchain to WebAssembly): https://emscripten.org/docs/getting_started/downloads.html#sdk-download-and-install
+4. In the same terminal and under the project root, run `yarn` or `npm i` to download dependencies.
+5. Press `F5` to run and debug extension.
+6. In the new window, press `F1` or `Ctrl+Shift+P` and invoke command `somany`.
 
 
 ## Known Issues
